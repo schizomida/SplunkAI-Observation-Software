@@ -1,0 +1,53 @@
+[
+  {
+    "name": "checkout.latency.p99",
+    "unit": "ms",
+    "service": "checkout-service",
+    "dataPoints": [
+      { "timestamp": "2024-01-15T09:50:00Z", "value": 118 },
+      { "timestamp": "2024-01-15T09:55:00Z", "value": 122 },
+      { "timestamp": "2024-01-15T10:00:00Z", "value": 340 },
+      { "timestamp": "2024-01-15T10:05:00Z", "value": 1850 },
+      { "timestamp": "2024-01-15T10:10:00Z", "value": 3920 },
+      { "timestamp": "2024-01-15T10:15:00Z", "value": 4210 },
+      { "timestamp": "2024-01-15T10:20:00Z", "value": 4180 },
+      { "timestamp": "2024-01-15T10:25:00Z", "value": 3650 },
+      { "timestamp": "2024-01-15T10:30:00Z", "value": 1240 },
+      { "timestamp": "2024-01-15T10:35:00Z", "value": 195 }
+    ]
+  },
+  {
+    "name": "checkout.error.rate",
+    "unit": "%",
+    "service": "checkout-service",
+    "dataPoints": [
+      { "timestamp": "2024-01-15T09:50:00Z", "value": 0.09 },
+      { "timestamp": "2024-01-15T09:55:00Z", "value": 0.11 },
+      { "timestamp": "2024-01-15T10:00:00Z", "value": 0.85 },
+      { "timestamp": "2024-01-15T10:05:00Z", "value": 4.20 },
+      { "timestamp": "2024-01-15T10:10:00Z", "value": 9.70 },
+      { "timestamp": "2024-01-15T10:15:00Z", "value": 11.80 },
+      { "timestamp": "2024-01-15T10:20:00Z", "value": 10.40 },
+      { "timestamp": "2024-01-15T10:25:00Z", "value": 7.30 },
+      { "timestamp": "2024-01-15T10:30:00Z", "value": 2.10 },
+      { "timestamp": "2024-01-15T10:35:00Z", "value": 0.30 }
+    ]
+  },
+  {
+    "name": "redis.connection.pool.utilization",
+    "unit": "%",
+    "service": "checkout-service",
+    "dataPoints": [
+      { "timestamp": "2024-01-15T09:50:00Z", "value": 28 },
+      { "timestamp": "2024-01-15T09:55:00Z", "value": 31 },
+      { "timestamp": "2024-01-15T10:00:00Z", "value": 52 },
+      { "timestamp": "2024-01-15T10:05:00Z", "value": 78 },
+      { "timestamp": "2024-01-15T10:10:00Z", "value": 94 },
+      { "timestamp": "2024-01-15T10:15:00Z", "value": 98 },
+      { "timestamp": "2024-01-15T10:20:00Z", "value": 97 },
+      { "timestamp": "2024-01-15T10:25:00Z", "value": 91 },
+      { "timestamp": "2024-01-15T10:30:00Z", "value": 65 },
+      { "timestamp": "2024-01-15T10:35:00Z", "value": 38 }
+    ]
+  }
+]

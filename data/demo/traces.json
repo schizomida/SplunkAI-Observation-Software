@@ -1,0 +1,235 @@
+[
+  {
+    "traceId": "a1b2c3d4e5f60004",
+    "rootSpan": "checkout-service",
+    "spans": [
+      {
+        "spanId": "f1e2d3c4b5a60004",
+        "parentSpanId": null,
+        "service": "checkout-service",
+        "operation": "POST /api/checkout",
+        "startTime": "2024-01-15T10:02:18Z",
+        "durationMs": 1800,
+        "status": "ok",
+        "tags": {
+          "http.method": "POST",
+          "http.url": "/api/checkout",
+          "http.status_code": 200,
+          "session.id": "sess-***",
+          "cart.item_count": 3
+        }
+      },
+      {
+        "spanId": "f1e2d3c4b5a60041",
+        "parentSpanId": "f1e2d3c4b5a60004",
+        "service": "payment-service",
+        "operation": "POST /api/payment/charge",
+        "startTime": "2024-01-15T10:02:18.120Z",
+        "durationMs": 1200,
+        "status": "ok",
+        "tags": {
+          "http.method": "POST",
+          "http.url": "/api/payment/charge",
+          "http.status_code": 200,
+          "payment.method": "card",
+          "payment.amount_cents": 4999
+        }
+      },
+      {
+        "spanId": "f1e2d3c4b5a60042",
+        "parentSpanId": "f1e2d3c4b5a60041",
+        "service": "payment-service",
+        "operation": "redis SET idempotency:payment:***",
+        "startTime": "2024-01-15T10:02:18.250Z",
+        "durationMs": 900,
+        "status": "timeout",
+        "tags": {
+          "db.type": "redis",
+          "db.operation": "SET",
+          "db.key": "idempotency:payment:***",
+          "redis.host": "redis:6379",
+          "error": "ETIMEDOUT",
+          "timeout_ms": 900
+        }
+      },
+      {
+        "spanId": "f1e2d3c4b5a60043",
+        "parentSpanId": "f1e2d3c4b5a60004",
+        "service": "checkout-service",
+        "operation": "redis GET session:cart:***",
+        "startTime": "2024-01-15T10:02:18.050Z",
+        "durationMs": 850,
+        "status": "timeout",
+        "tags": {
+          "db.type": "redis",
+          "db.operation": "GET",
+          "db.key": "session:cart:***",
+          "redis.host": "redis:6379",
+          "error": "ETIMEDOUT",
+          "timeout_ms": 850
+        }
+      }
+    ]
+  },
+  {
+    "traceId": "b2c3d4e5f6a70004",
+    "rootSpan": "checkout-service",
+    "spans": [
+      {
+        "spanId": "e2d3c4b5a6f70004",
+        "parentSpanId": null,
+        "service": "checkout-service",
+        "operation": "POST /api/checkout",
+        "startTime": "2024-01-15T10:10:22Z",
+        "durationMs": 3900,
+        "status": "error",
+        "tags": {
+          "http.method": "POST",
+          "http.url": "/api/checkout",
+          "http.status_code": 504,
+          "session.id": "sess-***",
+          "cart.item_count": 5,
+          "error": "upstream timeout"
+        }
+      },
+      {
+        "spanId": "e2d3c4b5a6f70041",
+        "parentSpanId": "e2d3c4b5a6f70004",
+        "service": "payment-service",
+        "operation": "POST /api/payment/charge",
+        "startTime": "2024-01-15T10:10:22.180Z",
+        "durationMs": 2800,
+        "status": "error",
+        "tags": {
+          "http.method": "POST",
+          "http.url": "/api/payment/charge",
+          "http.status_code": 503,
+          "payment.method": "card",
+          "payment.amount_cents": 8750,
+          "error": "redis unavailable",
+          "retry_count": 2
+        }
+      },
+      {
+        "spanId": "e2d3c4b5a6f70042",
+        "parentSpanId": "e2d3c4b5a6f70041",
+        "service": "payment-service",
+        "operation": "redis SET idempotency:payment:***",
+        "startTime": "2024-01-15T10:10:22.350Z",
+        "durationMs": 5000,
+        "status": "timeout",
+        "tags": {
+          "db.type": "redis",
+          "db.operation": "SET",
+          "db.key": "idempotency:payment:***",
+          "redis.host": "redis:6379",
+          "error": "ETIMEDOUT",
+          "timeout_ms": 5000,
+          "retry_count": 3
+        }
+      },
+      {
+        "spanId": "e2d3c4b5a6f70043",
+        "parentSpanId": "e2d3c4b5a6f70004",
+        "service": "checkout-service",
+        "operation": "redis GET session:cart:***",
+        "startTime": "2024-01-15T10:10:22.090Z",
+        "durationMs": 5000,
+        "status": "timeout",
+        "tags": {
+          "db.type": "redis",
+          "db.operation": "GET",
+          "db.key": "session:cart:***",
+          "redis.host": "redis:6379",
+          "error": "ETIMEDOUT",
+          "timeout_ms": 5000,
+          "pool.active_connections": 98,
+          "pool.size": 100
+        }
+      }
+    ]
+  },
+  {
+    "traceId": "a1b2c3d4e5f60007",
+    "rootSpan": "checkout-service",
+    "spans": [
+      {
+        "spanId": "f1e2d3c4b5a60007",
+        "parentSpanId": null,
+        "service": "checkout-service",
+        "operation": "POST /api/checkout",
+        "startTime": "2024-01-15T10:20:05Z",
+        "durationMs": 4200,
+        "status": "error",
+        "tags": {
+          "http.method": "POST",
+          "http.url": "/api/checkout",
+          "http.status_code": 504,
+          "session.id": "sess-***",
+          "cart.item_count": 2,
+          "error": "upstream timeout",
+          "latency.p99_ms": 4200,
+          "latency.baseline_ms": 120
+        }
+      },
+      {
+        "spanId": "f1e2d3c4b5a60071",
+        "parentSpanId": "f1e2d3c4b5a60007",
+        "service": "payment-service",
+        "operation": "POST /api/payment/charge",
+        "startTime": "2024-01-15T10:20:05.200Z",
+        "durationMs": 3100,
+        "status": "error",
+        "tags": {
+          "http.method": "POST",
+          "http.url": "/api/payment/charge",
+          "http.status_code": 503,
+          "payment.method": "card",
+          "payment.amount_cents": 12300,
+          "error": "redis unavailable — transaction aborted",
+          "retry_count": 3,
+          "transaction_aborted": true
+        }
+      },
+      {
+        "spanId": "f1e2d3c4b5a60072",
+        "parentSpanId": "f1e2d3c4b5a60071",
+        "service": "payment-service",
+        "operation": "redis GET idempotency:payment:***",
+        "startTime": "2024-01-15T10:20:05.420Z",
+        "durationMs": 5000,
+        "status": "timeout",
+        "tags": {
+          "db.type": "redis",
+          "db.operation": "GET",
+          "db.key": "idempotency:payment:***",
+          "redis.host": "redis:6379",
+          "error": "ETIMEDOUT",
+          "timeout_ms": 5000,
+          "retry_count": 3,
+          "last_error": "ETIMEDOUT"
+        }
+      },
+      {
+        "spanId": "f1e2d3c4b5a60073",
+        "parentSpanId": "f1e2d3c4b5a60007",
+        "service": "checkout-service",
+        "operation": "redis GET session:cart:***",
+        "startTime": "2024-01-15T10:20:05.100Z",
+        "durationMs": 5000,
+        "status": "timeout",
+        "tags": {
+          "db.type": "redis",
+          "db.operation": "GET",
+          "db.key": "session:cart:***",
+          "redis.host": "redis:6379",
+          "error": "ETIMEDOUT",
+          "timeout_ms": 5000,
+          "pool.active_connections": 100,
+          "pool.size": 100,
+          "pool.waiting_requests": 63
+        }
+      }
+    ]
+  }
+]
