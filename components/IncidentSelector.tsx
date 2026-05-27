@@ -60,7 +60,6 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
     onSelect(incident);
   }
 
-  // Pre-fill with "last 30 minutes" for convenience
   function handleQuickLive() {
     const now = new Date();
     const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000);
@@ -80,141 +79,180 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Live Splunk Section */}
-      <div className="border border-green-200 rounded-lg p-6 shadow-sm bg-green-50">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <h3 className="text-lg font-semibold text-gray-900">
-            Live Splunk Investigation
-          </h3>
+    <div className="max-w-2xl mx-auto space-y-8">
+      {/* Hero Section */}
+      <div className="text-center py-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-medium mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+          AI-Powered Incident Investigation
         </div>
-        <p className="text-sm text-gray-600 mb-4">
-          Query your real Splunk instance for live observability data.
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Welcome to SignalSage
+        </h2>
+        <p className="text-gray-600 max-w-md mx-auto">
+          Select an incident to begin automated root cause analysis. SignalSage will query Splunk,
+          analyze evidence, and generate actionable remediation steps.
         </p>
+      </div>
 
-        <button
-          onClick={handleQuickLive}
-          className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors mb-3"
-        >
-          🔍 Investigate Last 30 Minutes
-        </button>
-
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="w-full py-2 px-4 border border-green-300 hover:bg-green-100 text-green-800 font-medium rounded-md transition-colors text-sm"
-        >
-          {showForm ? 'Hide Custom Form' : 'Custom Investigation...'}
-        </button>
-
-        {showForm && (
-          <form onSubmit={handleSubmitLive} className="mt-4 space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Service Name</label>
-              <input
-                type="text"
-                value={service}
-                onChange={(e) => setService(e.target.value)}
-                placeholder="e.g., checkout-service, payment-api"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                required
-              />
+      {/* Live Splunk Section */}
+      <div className="relative overflow-hidden rounded-xl border-2 border-green-200 p-6 shadow-sm bg-gradient-to-br from-green-50 via-white to-emerald-50">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+        <div className="relative">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="relative">
+              <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
+              <span className="absolute inset-0 w-3 h-3 rounded-full bg-green-500 pulse-ring" />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Title (optional)</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Latency Spike Investigation"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            <h3 className="text-lg font-bold text-gray-900">
+              Live Splunk Investigation
+            </h3>
+            <span className="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+              LIVE
+            </span>
+          </div>
+          <p className="text-sm text-gray-600 mb-5">
+            Connect to your real Splunk instance and investigate live observability data in real-time.
+          </p>
+
+          <button
+            onClick={handleQuickLive}
+            className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+          >
+            <span>🔍</span>
+            <span>Investigate Last 30 Minutes</span>
+          </button>
+
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="w-full mt-3 py-2 px-4 border border-green-300 hover:bg-green-50 text-green-800 font-medium rounded-lg transition-all duration-200 text-sm"
+          >
+            {showForm ? '▲ Hide Custom Form' : '▼ Custom Investigation...'}
+          </button>
+
+          {showForm && (
+            <form onSubmit={handleSubmitLive} className="mt-4 space-y-3 animate-fade-in-up">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Service Name</label>
                 <input
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  type="text"
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                  placeholder="e.g., checkout-service, payment-api"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                  required
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">End Time</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Title (optional)</label>
                 <input
-                  type="datetime-local"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g., Latency Spike Investigation"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Severity</label>
-              <select
-                value={severity}
-                onChange={(e) => setSeverity(e.target.value as Severity)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
+                  <input
+                    type="datetime-local"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">End Time</label>
+                  <input
+                    type="datetime-local"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Severity</label>
+                <select
+                  value={severity}
+                  onChange={(e) => setSeverity(e.target.value as Severity)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Description (optional)</label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="What are you investigating?"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg transition-all duration-200 shadow-sm"
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Description (optional)</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What are you investigating?"
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
-            >
-              Start Live Investigation
-            </button>
-          </form>
-        )}
+                Start Live Investigation
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-4">
+        <div className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">or try a demo</span>
+        <div className="flex-1 h-px bg-gray-200" />
       </div>
 
       {/* Demo Section */}
-      <div className="border border-gray-200 rounded-lg p-6 shadow-sm bg-white">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {DEMO_INCIDENT.title}
-          </h3>
-          <span
-            className={`px-2 py-1 rounded text-xs font-medium uppercase ${severityColor(DEMO_INCIDENT.severity)}`}
+      <div className="relative overflow-hidden rounded-xl border border-gray-200 p-6 shadow-sm bg-gradient-to-br from-white via-white to-indigo-50 card-hover">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+        <div className="relative">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">
+                {DEMO_INCIDENT.title}
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">Pre-loaded synthetic data — no Splunk connection needed</p>
+            </div>
+            <span
+              className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase ${severityColor(DEMO_INCIDENT.severity)}`}
+            >
+              {DEMO_INCIDENT.severity}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+            <div className="bg-gray-50 rounded-lg px-3 py-2">
+              <span className="text-xs text-gray-500 block">Service</span>
+              <span className="font-medium text-gray-900">{DEMO_INCIDENT.service}</span>
+            </div>
+            <div className="bg-gray-50 rounded-lg px-3 py-2">
+              <span className="text-xs text-gray-500 block">Duration</span>
+              <span className="font-medium text-gray-900">30 minutes</span>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-4 leading-relaxed">{DEMO_INCIDENT.description}</p>
+
+          <button
+            onClick={() => onSelect(DEMO_INCIDENT)}
+            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
           >
-            {DEMO_INCIDENT.severity}
-          </span>
+            <span>🔮</span>
+            <span>Run Demo Investigation</span>
+          </button>
         </div>
-
-        <div className="space-y-2 text-sm text-gray-600 mb-4">
-          <p>
-            <span className="font-medium text-gray-700">Service:</span>{' '}
-            {DEMO_INCIDENT.service}
-          </p>
-          <p>
-            <span className="font-medium text-gray-700">Time Window:</span>{' '}
-            {new Date(DEMO_INCIDENT.startTime).toLocaleString()} &mdash;{' '}
-            {new Date(DEMO_INCIDENT.endTime).toLocaleString()}
-          </p>
-          <p className="text-gray-500">{DEMO_INCIDENT.description}</p>
-        </div>
-
-        <button
-          onClick={() => onSelect(DEMO_INCIDENT)}
-          className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors"
-        >
-          Use Demo Incident
-        </button>
       </div>
     </div>
   );
