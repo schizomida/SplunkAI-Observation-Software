@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { ApiResponse, IncidentReport } from '@/types/index';
+import type { ApiResponse, IncidentReport, Incident } from '@/types/index';
 import { incidentStore } from '@/lib/incidentStore';
 import { generateQueries } from '@/lib/analysis/queryGenerator';
 import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
@@ -11,40 +11,40 @@ import { generateReport } from '@/lib/reporting/reportGenerator';
 import { getSplunkConfig, isConfigured } from '@/lib/splunk/config';
 
 /**
- * GET /api/incidents/[id]/report
- * Runs the investigation pipeline and generates a markdown report.
- *
- * Uses live Splunk data when configured, falls back to demo data otherwise.
+ * Shared handler for both GET and POST.
+ * POST allows passing the incident in the request body as a fallback
+ * when the in-memory store doesn't have it (dev mode module isolation).
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
+async function handleReport(
+  request: NextRequest,
+  id: string
 ): Promise<NextResponse<ApiResponse<IncidentReport>>> {
-  const { id } = params;
-
-  // Input validation: id must be a non-empty string with reasonable length
+  // Input validation
   if (!id || id.length > 128) {
     return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: 'Invalid incident id',
-        timestamp: new Date().toISOString(),
-      },
+      { success: false, data: null, error: 'Invalid incident id', timestamp: new Date().toISOString() },
       { status: 400 }
     );
   }
 
-  const incident = incidentStore.get(id);
+  // Try store first, then request body
+  let incident: Incident | undefined = incidentStore.get(id);
+
+  if (!incident) {
+    try {
+      const body = await request.json();
+      if (body && body.id === id) {
+        incident = body as Incident;
+        incidentStore.set(id, incident);
+      }
+    } catch {
+      // No body — that's fine for GET requests
+    }
+  }
 
   if (!incident) {
     return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: 'Incident not found',
-        timestamp: new Date().toISOString(),
-      },
+      { success: false, data: null, error: 'Incident not found', timestamp: new Date().toISOString() },
       { status: 404 }
     );
   }
@@ -53,7 +53,6 @@ export async function GET(
     // Run investigation pipeline
     const queries = generateQueries(incident);
 
-    // Determine evidence source
     const config = getSplunkConfig();
     const useLive = isConfigured(config);
 
@@ -84,28 +83,38 @@ export async function GET(
       analyzedAt: new Date().toISOString(),
     };
 
-    // Generate report
     const report = generateReport(incident, investigationResult);
 
     return NextResponse.json(
-      {
-        success: true,
-        data: report,
-        error: null,
-        timestamp: new Date().toISOString(),
-      },
+      { success: true, data: report, error: null, timestamp: new Date().toISOString() },
       { status: 200 }
     );
   } catch (error) {
     console.error(`[Report] Pipeline error:`, error);
     return NextResponse.json(
-      {
-        success: false,
-        data: null,
-        error: error instanceof Error ? error.message : 'Report generation failed',
-        timestamp: new Date().toISOString(),
-      },
+      { success: false, data: null, error: error instanceof Error ? error.message : 'Report generation failed', timestamp: new Date().toISOString() },
       { status: 500 }
     );
   }
+}
+
+/**
+ * GET /api/incidents/[id]/report
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse<ApiResponse<IncidentReport>>> {
+  return handleReport(request, params.id);
+}
+
+/**
+ * POST /api/incidents/[id]/report
+ * Same as GET but accepts incident data in the request body.
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse<ApiResponse<IncidentReport>>> {
+  return handleReport(request, params.id);
 }

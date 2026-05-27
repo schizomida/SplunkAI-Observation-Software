@@ -55,7 +55,11 @@ export default function Home() {
       // Run investigation
       const investigateRes = await fetch(
         `/api/incidents/${selected.id}/investigate`,
-        { method: 'POST' }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(selected),
+        }
       );
       const investigateData: ApiResponse<InvestigationResult> =
         await investigateRes.json();
@@ -67,7 +71,11 @@ export default function Home() {
       setInvestigation(investigateData.data);
 
       // Generate report
-      const reportRes = await fetch(`/api/incidents/${selected.id}/report`);
+      const reportRes = await fetch(`/api/incidents/${selected.id}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selected),
+      });
       const reportData: ApiResponse<IncidentReport> =
         await reportRes.json();
       if (!reportData.success || !reportData.data) {

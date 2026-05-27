@@ -14,13 +14,14 @@ import { getSplunkConfig, isConfigured } from '@/lib/splunk/config';
  * Runs the full investigation pipeline for the given incident.
  *
  * Strategy:
- * 1. If Splunk is configured (token + ALLOW_LIVE_SPL=true): run live queries
- * 2. If mode is 'demo' or Splunk is not configured: use demo evidence
+ * 1. Look up incident from store, or accept it in the request body
+ * 2. If Splunk is configured (token + ALLOW_LIVE_SPL=true): run live queries
+ * 3. If mode is 'demo' or Splunk is not configured: use demo evidence
  *
  * Pipeline: generateQueries → evidence (live or demo) → analyzeRootCause → generateRemediation
  */
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<ApiResponse<InvestigationResult>>> {
   const { id } = params;
@@ -38,7 +39,22 @@ export async function POST(
     );
   }
 
-  const incident = incidentStore.get(id);
+  // Try to find incident in store first, then fall back to request body
+  let incident = incidentStore.get(id);
+
+  if (!incident) {
+    // Try to parse incident from request body as fallback
+    try {
+      const body = await request.json();
+      if (body && body.id === id) {
+        incident = body as typeof incident;
+        // Store it for future lookups
+        incidentStore.set(id, incident!);
+      }
+    } catch {
+      // No body or invalid JSON — that's fine, we'll 404 below
+    }
+  }
 
   if (!incident) {
     return NextResponse.json(
