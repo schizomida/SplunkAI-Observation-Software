@@ -4,7 +4,7 @@ import type {
   EvidenceItem,
   RootCauseHypothesis,
   RemediationStep,
-} from '@/types/index';
+} from '@/lib/types';
 
 // ── Fallback Summaries (rule-based, no API key needed) ────────────────────────
 

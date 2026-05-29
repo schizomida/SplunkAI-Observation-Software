@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { RemediationStep } from '@/types/index';
+import type { RemediationStep } from '@/lib/types';
 
 interface RemediationChecklistProps {
   steps: RemediationStep[];

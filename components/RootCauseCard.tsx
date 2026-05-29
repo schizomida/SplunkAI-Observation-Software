@@ -1,6 +1,6 @@
 'use client';
 
-import type { RootCauseHypothesis } from '@/types/index';
+import type { RootCauseHypothesis } from '@/lib/types';
 
 interface RootCauseCardProps {
   hypotheses: RootCauseHypothesis[];

@@ -62,7 +62,7 @@ if (!HEC_TOKEN) {
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 // ── Load demo data ────────────────────────────────────────────────────────────
-const dataDir = path.join(__dirname, '..', 'data', 'demo');
+const dataDir = path.join(__dirname, '..', 'lib', 'analysis', 'fixtures');
 const logs = JSON.parse(fs.readFileSync(path.join(dataDir, 'logs.json'), 'utf8'));
 const metrics = JSON.parse(fs.readFileSync(path.join(dataDir, 'metrics.json'), 'utf8'));
 const traces = JSON.parse(fs.readFileSync(path.join(dataDir, 'traces.json'), 'utf8'));

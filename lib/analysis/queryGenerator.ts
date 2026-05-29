@@ -9,7 +9,7 @@
  * prevent SPL injection.
  */
 
-import { Incident, InvestigationQuery } from '@/types';
+import { Incident, InvestigationQuery } from '@/lib/types';
 import { buildSafeQuery } from '@/lib/splunk/queryBuilder';
 
 /**

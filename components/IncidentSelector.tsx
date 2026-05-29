@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Incident, Severity } from '@/types/index';
+import type { Incident, Severity } from '@/lib/types';
 
 const DEMO_INCIDENT: Incident = {
   id: 'demo-001',

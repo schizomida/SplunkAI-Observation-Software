@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Incident, ApiResponse } from '@/types/index';
-import { incidentStore } from '@/lib/incidentStore';
+import type { Incident, ApiResponse } from '@/lib/types';
+import { incidentStore } from '@/lib/splunk/incidentStore';
 
 /**
  * GET /api/incidents/[id]

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { IncidentSchema } from '@/lib/validation';
-import type { Incident, ApiResponse } from '@/types/index';
-import { incidentStore } from '@/lib/incidentStore';
+import { IncidentSchema } from '@/lib/shared/validation';
+import type { Incident, ApiResponse } from '@/lib/types';
+import { incidentStore } from '@/lib/splunk/incidentStore';
 
 /**
  * POST /api/incidents

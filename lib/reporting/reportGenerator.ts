@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { Incident, InvestigationResult, IncidentReport, EvidenceItem } from '@/types/index';
+import type { Incident, InvestigationResult, IncidentReport, EvidenceItem } from '@/lib/types';
 
 // ── Section Generators ────────────────────────────────────────────────────────
 

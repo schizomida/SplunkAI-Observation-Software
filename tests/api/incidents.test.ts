@@ -10,7 +10,7 @@
  */
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/incidents/route';
-import { incidentStore } from '@/lib/incidentStore';
+import { incidentStore } from '@/lib/splunk/incidentStore';
 import { GET as GET_BY_ID } from '@/app/api/incidents/[id]/route';
 import { POST as POST_INVESTIGATE } from '@/app/api/incidents/[id]/investigate/route';
 import { GET as GET_REPORT } from '@/app/api/incidents/[id]/report/route';

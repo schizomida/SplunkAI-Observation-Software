@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { IncidentReport } from '@/types/index';
+import type { IncidentReport } from '@/lib/types';
 
 interface ReportPreviewProps {
   report: IncidentReport;

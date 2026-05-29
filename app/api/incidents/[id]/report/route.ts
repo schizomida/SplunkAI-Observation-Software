@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { ApiResponse, IncidentReport, Incident } from '@/types/index';
-import { incidentStore } from '@/lib/incidentStore';
+import type { ApiResponse, IncidentReport, Incident } from '@/lib/types';
+import { incidentStore } from '@/lib/splunk/incidentStore';
 import { generateQueries } from '@/lib/analysis/queryGenerator';
 import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { collectLiveEvidence } from '@/lib/analysis/liveEvidenceCollector';

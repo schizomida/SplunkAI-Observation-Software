@@ -1,6 +1,6 @@
 import { generateRemediation } from '@/lib/analysis/remediationEngine';
-import { RemediationStepSchema } from '@/lib/validation';
-import type { RootCauseHypothesis } from '@/types/index';
+import { RemediationStepSchema } from '@/lib/shared/validation';
+import type { RootCauseHypothesis } from '@/lib/types';
 
 // ── Test Fixtures ─────────────────────────────────────────────────────────────
 

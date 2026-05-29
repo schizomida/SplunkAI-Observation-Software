@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { InvestigationQuery } from '@/types/index';
+import type { InvestigationQuery } from '@/lib/types';
 
 interface QueryPanelProps {
   queries: InvestigationQuery[];

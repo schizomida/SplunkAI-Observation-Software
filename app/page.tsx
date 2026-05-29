@@ -6,7 +6,7 @@ import type {
   InvestigationResult,
   IncidentReport,
   ApiResponse,
-} from '@/types/index';
+} from '@/lib/types';
 import IncidentSelector from '@/components/IncidentSelector';
 import QueryPanel from '@/components/QueryPanel';
 import EvidenceTimeline from '@/components/EvidenceTimeline';

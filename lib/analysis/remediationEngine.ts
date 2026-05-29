@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import type { RootCauseHypothesis, RemediationStep } from '@/types/index';
+import type { RootCauseHypothesis, RemediationStep } from '@/lib/types';
 
 // ── Playbook Definitions ──────────────────────────────────────────────────────
 

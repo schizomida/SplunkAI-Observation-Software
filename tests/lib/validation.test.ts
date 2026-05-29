@@ -9,7 +9,7 @@ import {
   InvestigationResultSchema,
   IncidentReportSchema,
   ApiResponseSchema,
-} from '@/lib/validation';
+} from '@/lib/shared/validation';
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------

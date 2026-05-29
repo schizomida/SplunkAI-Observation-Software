@@ -1,7 +1,7 @@
 import { analyzeRootCause } from '@/lib/analysis/rootCauseAnalyzer';
 import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
-import { RootCauseHypothesisSchema } from '@/lib/validation';
-import type { EvidenceItem } from '@/types/index';
+import { RootCauseHypothesisSchema } from '@/lib/shared/validation';
+import type { EvidenceItem } from '@/lib/types';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 

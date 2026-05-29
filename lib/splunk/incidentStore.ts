@@ -1,4 +1,4 @@
-import type { Incident } from '@/types/index';
+import type { Incident } from '@/lib/types';
 
 /**
  * In-memory incident store.

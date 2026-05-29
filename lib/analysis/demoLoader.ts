@@ -1,10 +1,10 @@
-import type { EvidenceItem, Incident } from '@/types/index';
+import type { EvidenceItem, Incident } from '@/lib/types';
 
-import incidentsData from '@/data/demo/incidents.json';
-import logsData from '@/data/demo/logs.json';
-import metricsData from '@/data/demo/metrics.json';
-import tracesData from '@/data/demo/traces.json';
-import deploymentsData from '@/data/demo/deployments.json';
+import incidentsData from '@/lib/analysis/fixtures/incidents.json';
+import logsData from '@/lib/analysis/fixtures/logs.json';
+import metricsData from '@/lib/analysis/fixtures/metrics.json';
+import tracesData from '@/lib/analysis/fixtures/traces.json';
+import deploymentsData from '@/lib/analysis/fixtures/deployments.json';
 
 /**
  * Returns the first incident from the demo incidents fixture.

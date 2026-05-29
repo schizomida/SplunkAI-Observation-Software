@@ -5,7 +5,7 @@
  * into typed EvidenceItem[] for the investigation pipeline.
  */
 
-import type { EvidenceItem, InvestigationQuery } from '@/types/index';
+import type { EvidenceItem, InvestigationQuery } from '@/lib/types';
 import { runQuery } from '@/lib/splunk/client';
 import { getSplunkConfig } from '@/lib/splunk/config';
 

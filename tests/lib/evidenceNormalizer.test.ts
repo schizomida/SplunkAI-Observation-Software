@@ -6,8 +6,8 @@ import {
   normalizeAll,
   maskSensitiveFields,
 } from '@/lib/analysis/evidenceNormalizer';
-import { EvidenceItemSchema } from '@/lib/validation';
-import type { EvidenceItem } from '@/types/index';
+import { EvidenceItemSchema } from '@/lib/shared/validation';
+import type { EvidenceItem } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Shared raw fixtures

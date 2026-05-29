@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { EvidenceItem } from '@/types/index';
+import type { EvidenceItem } from '@/lib/types';
 
 interface EvidenceTimelineProps {
   evidence: EvidenceItem[];

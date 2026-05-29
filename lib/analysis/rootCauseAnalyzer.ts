@@ -1,4 +1,4 @@
-import type { EvidenceItem, RootCauseHypothesis } from '@/types/index';
+import type { EvidenceItem, RootCauseHypothesis } from '@/lib/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

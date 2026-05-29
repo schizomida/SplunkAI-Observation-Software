@@ -1,5 +1,5 @@
 import { loadDemoIncident, loadDemoEvidence } from '@/lib/analysis/demoLoader';
-import { IncidentSchema, EvidenceItemSchema } from '@/lib/validation';
+import { IncidentSchema, EvidenceItemSchema } from '@/lib/shared/validation';
 
 // ---------------------------------------------------------------------------
 // loadDemoIncident

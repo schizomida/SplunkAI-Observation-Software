@@ -1,4 +1,4 @@
-import type { EvidenceItem } from '@/types/index';
+import type { EvidenceItem } from '@/lib/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

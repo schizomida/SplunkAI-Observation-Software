@@ -3,8 +3,8 @@ import { loadDemoIncident, loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { analyzeRootCause } from '@/lib/analysis/rootCauseAnalyzer';
 import { generateRemediation } from '@/lib/analysis/remediationEngine';
 import { generateQueries } from '@/lib/analysis/queryGenerator';
-import { IncidentReportSchema } from '@/lib/validation';
-import type { Incident, InvestigationResult } from '@/types/index';
+import { IncidentReportSchema } from '@/lib/shared/validation';
+import type { Incident, InvestigationResult } from '@/lib/types';
 
 // ── Test Setup ────────────────────────────────────────────────────────────────
 

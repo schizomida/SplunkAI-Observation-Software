@@ -1,6 +1,6 @@
 import { generateQueries } from '@/lib/analysis/queryGenerator';
-import { InvestigationQuerySchema } from '@/lib/validation';
-import { Incident } from '@/types';
+import { InvestigationQuerySchema } from '@/lib/shared/validation';
+import { Incident } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Shared test fixture
