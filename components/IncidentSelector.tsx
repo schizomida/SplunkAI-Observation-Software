@@ -60,11 +60,16 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [servicesLoading, setServicesLoading] = useState(true);
   const [showCustomService, setShowCustomService] = useState(false);
 
-  // Fetch services from Splunk on mount
+  // Fetch services from Splunk on mount (with timeout)
   useEffect(() => {
     async function fetchServices() {
       try {
-        const res = await fetch('/api/splunk/services');
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+        const res = await fetch('/api/splunk/services', { signal: controller.signal });
+        clearTimeout(timeout);
+
         if (res.ok) {
           const data = await res.json();
           if (data.services && data.services.length > 0) {
@@ -73,7 +78,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
           }
         }
       } catch {
-        // Splunk not available — user can type manually
+        // Splunk not available or timeout — user can type manually
       } finally {
         setServicesLoading(false);
       }

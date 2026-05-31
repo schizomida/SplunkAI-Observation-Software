@@ -20,7 +20,7 @@ export async function GET() {
 
   try {
     const results = await runQuery(
-      'search index=main | stats count by service | sort -count | head 50',
+      'index=main earliest=-24h | stats count by service | sort -count | head 50',
       config
     );
 
