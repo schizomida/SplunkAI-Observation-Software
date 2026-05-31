@@ -23,11 +23,15 @@ function toSplunkTime(isoTime: string): string {
 }
 
 /**
- * Generates 5 investigation queries for the given incident, parameterized
+ * Generates 8 investigation queries for the given incident, parameterized
  * by the incident's service name and time window.
  *
+ * Queries 1–5 use safe interpolation for the service name.
+ * Queries 6–8 are ML-powered queries that operate across all services
+ * and only interpolate epoch timestamps directly.
+ *
  * @param incident - The incident to generate queries for.
- * @returns An array of exactly 5 `InvestigationQuery` objects.
+ * @returns An array of exactly 8 `InvestigationQuery` objects.
  * @throws {Error} If the incident's service name contains disallowed characters.
  */
 export function generateQueries(incident: Incident): InvestigationQuery[] {
@@ -127,6 +131,109 @@ export function generateQueries(incident: Incident): InvestigationQuery[] {
         params
       ),
       riskLevel: 'high',
+    },
+
+    // ── 6. Anomaly Detection (Z-Score) — MLTK ─────────────────────────────
+    {
+      id: 'anomaly-detection-zscore',
+      name: 'Anomaly Detection (Z-Score)',
+      description:
+        'Identifies metric values that deviate significantly from the mean using statistical z-score analysis.',
+      spl:
+        `index=main sourcetype=app_metrics earliest=${earliest} latest=${latest} ` +
+        '| eval metric_value=value ' +
+        '| eventstats avg(metric_value) as avg_val stdev(metric_value) as stdev_val by metric_name ' +
+        '| eval z_score=abs((metric_value - avg_val) / stdev_val) ' +
+        '| where z_score > 2 ' +
+        '| table _time metric_name value avg_val stdev_val z_score ' +
+        '| sort -z_score',
+      riskLevel: 'medium',
+    },
+
+    // ── 7. Log Pattern Clustering — MLTK ──────────────────────────────────
+    {
+      id: 'log-pattern-clustering',
+      name: 'Log Pattern Clustering',
+      description:
+        'Groups similar log messages into clusters to identify dominant error patterns and recurring issues.',
+      spl:
+        `index=main sourcetype=app_logs earliest=${earliest} latest=${latest} ` +
+        '| cluster showcount=true t=0.7 ' +
+        '| sort -cluster_count ' +
+        '| table cluster_count _time service level message ' +
+        '| head 20',
+      riskLevel: 'low',
+    },
+
+    // ── 8. Cross-Signal Correlation — MLTK ─────────────────────────────────
+    {
+      id: 'cross-signal-correlation',
+      name: 'Cross-Signal Correlation',
+      description:
+        'Correlates events across all signal types (logs, metrics, traces, deployments) to identify related patterns.',
+      spl:
+        `index=main earliest=${earliest} latest=${latest} ` +
+        '| stats count as event_count dc(service) as services_affected values(level) as log_levels by sourcetype ' +
+        '| sort -event_count',
+      riskLevel: 'high',
+    },
+
+    // ── 9. Service Health Score ────────────────────────────────────────────
+    {
+      id: 'service-health-score',
+      name: 'Service Health Score',
+      description:
+        'Computes a health score for each service based on error rates and warning ratios to prioritize which services need attention.',
+      spl:
+        `index=main earliest=${earliest} latest=${latest} ` +
+        '| stats count(eval(level="ERROR")) as errors count(eval(level="WARN")) as warnings count as total by service ' +
+        '| eval error_rate=round(errors/total*100, 2) ' +
+        '| eval health_score=round(100 - error_rate - (warnings/total*50), 1) ' +
+        '| sort health_score',
+      riskLevel: 'low',
+    },
+
+    // ── 10. Latency Distribution ───────────────────────────────────────────
+    {
+      id: 'latency-distribution',
+      name: 'Latency Distribution',
+      description:
+        'Analyzes the full latency distribution (p50, p90, p95, p99, max) per service to identify tail-latency issues.',
+      spl:
+        `index=main sourcetype=app_traces earliest=${earliest} latest=${latest} ` +
+        '| stats count p50(durationMs) as p50 p90(durationMs) as p90 p95(durationMs) as p95 p99(durationMs) as p99 max(durationMs) as max_latency by service ' +
+        '| eval latency_spread=max_latency-p50 ' +
+        '| sort -p99',
+      riskLevel: 'low',
+    },
+
+    // ── 11. Error Cascade Detection ────────────────────────────────────────
+    {
+      id: 'error-cascade-detection',
+      name: 'Error Cascade Detection',
+      description:
+        'Detects cascading failures by finding error transactions spanning multiple services within a short time window.',
+      spl:
+        `index=main sourcetype=app_logs level=ERROR earliest=${earliest} latest=${latest} ` +
+        '| transaction service maxspan=2m ' +
+        '| stats count as cascade_count values(service) as affected_services dc(service) as service_count by _time ' +
+        '| where service_count > 1 ' +
+        '| sort -cascade_count',
+      riskLevel: 'high',
+    },
+
+    // ── 12. Deployment Impact Window ───────────────────────────────────────
+    {
+      id: 'deployment-impact-window',
+      name: 'Deployment Impact Window',
+      description:
+        'Compares error rates before and after the most recent deployment to assess whether the deploy introduced issues.',
+      spl:
+        `index=main earliest=${earliest} latest=${latest} ` +
+        '| eval is_post_deploy=if(_time > relative_time(now(), "-30m"), 1, 0) ' +
+        '| stats count(eval(level="ERROR")) as errors count as total by is_post_deploy sourcetype ' +
+        '| eval error_rate=round(errors/total*100, 2)',
+      riskLevel: 'medium',
     },
   ];
 

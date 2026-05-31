@@ -28,8 +28,8 @@ describe('generateQueries — count and schema', () => {
     queries = generateQueries(baseIncident);
   });
 
-  test('returns exactly 5 queries', () => {
-    expect(queries).toHaveLength(5);
+  test('returns exactly 12 queries', () => {
+    expect(queries).toHaveLength(12);
   });
 
   test('every query passes InvestigationQuerySchema validation', () => {
@@ -56,25 +56,25 @@ describe('generateQueries — field completeness', () => {
     queries = generateQueries(baseIncident);
   });
 
-  test('all 5 queries have unique ids', () => {
+  test('all 12 queries have unique ids', () => {
     const ids = queries.map((q) => q.id);
     const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(5);
+    expect(uniqueIds.size).toBe(12);
   });
 
-  test('all 5 queries have non-empty name', () => {
+  test('all 12 queries have non-empty name', () => {
     queries.forEach((q) => {
       expect(q.name.length).toBeGreaterThan(0);
     });
   });
 
-  test('all 5 queries have non-empty description', () => {
+  test('all 12 queries have non-empty description', () => {
     queries.forEach((q) => {
       expect(q.description.length).toBeGreaterThan(0);
     });
   });
 
-  test('all 5 queries have non-empty spl', () => {
+  test('all 12 queries have non-empty spl', () => {
     queries.forEach((q) => {
       expect(q.spl.length).toBeGreaterThan(0);
     });
@@ -112,19 +112,19 @@ describe('generateQueries — risk levels', () => {
     queries = generateQueries(baseIncident);
   });
 
-  test('exactly 2 queries have riskLevel "low"', () => {
+  test('exactly 5 queries have riskLevel "low"', () => {
     const lowRisk = queries.filter((q) => q.riskLevel === 'low');
-    expect(lowRisk).toHaveLength(2);
+    expect(lowRisk).toHaveLength(5);
   });
 
-  test('exactly 2 queries have riskLevel "medium"', () => {
+  test('exactly 4 queries have riskLevel "medium"', () => {
     const mediumRisk = queries.filter((q) => q.riskLevel === 'medium');
-    expect(mediumRisk).toHaveLength(2);
+    expect(mediumRisk).toHaveLength(4);
   });
 
-  test('exactly 1 query has riskLevel "high"', () => {
+  test('exactly 3 queries have riskLevel "high"', () => {
     const highRisk = queries.filter((q) => q.riskLevel === 'high');
-    expect(highRisk).toHaveLength(1);
+    expect(highRisk).toHaveLength(3);
   });
 });
 
@@ -157,6 +157,18 @@ describe('generateQueries — specific query ids', () => {
 
   test('contains query id "host-pod-impact"', () => {
     expect(queryIds).toContain('host-pod-impact');
+  });
+
+  test('contains query id "anomaly-detection-zscore"', () => {
+    expect(queryIds).toContain('anomaly-detection-zscore');
+  });
+
+  test('contains query id "log-pattern-clustering"', () => {
+    expect(queryIds).toContain('log-pattern-clustering');
+  });
+
+  test('contains query id "cross-signal-correlation"', () => {
+    expect(queryIds).toContain('cross-signal-correlation');
   });
 });
 

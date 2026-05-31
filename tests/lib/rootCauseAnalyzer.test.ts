@@ -27,7 +27,7 @@ describe('analyzeRootCause', () => {
   it('returns empty array when evidence has no matching patterns', () => {
     const evidence: EvidenceItem[] = [
       makeEvidence({ id: 'ev-1', type: 'log', data: { level: 'INFO' }, summary: 'All good' }),
-      makeEvidence({ id: 'ev-2', type: 'metric', summary: 'Normal latency' }),
+      makeEvidence({ id: 'ev-2', type: 'metric', summary: 'Normal value recorded' }),
     ];
     const result = analyzeRootCause(evidence);
     expect(result).toEqual([]);

@@ -5,6 +5,7 @@ import type {
   RootCauseHypothesis,
   RemediationStep,
 } from '@/lib/types';
+import { summarizeWithSplunkAI } from '@/lib/ai/splunkAssistant';
 
 // ── Fallback Summaries (rule-based, no API key needed) ────────────────────────
 
@@ -100,6 +101,16 @@ export async function generateInvestigationSummary(
   evidence: EvidenceItem[],
   hypotheses: RootCauseHypothesis[]
 ): Promise<string> {
+  // Priority 1: Splunk AI Assistant
+  const splunkSummary = await summarizeWithSplunkAI({
+    type: 'investigation',
+    incident,
+    evidence,
+    hypotheses,
+  });
+  if (splunkSummary) return splunkSummary;
+
+  // Priority 2: OpenAI
   const prompt = `Summarize this incident investigation in 2-3 sentences:
 - Incident: "${incident.title}" on service "${incident.service}" (${incident.severity} severity)
 - Evidence collected: ${evidence.length} items (types: ${Array.from(new Set(evidence.map((e) => e.type))).join(', ')})
@@ -107,7 +118,10 @@ export async function generateInvestigationSummary(
 - Description: ${incident.description}`;
 
   const aiSummary = await callOpenAI(prompt);
-  return aiSummary || fallbackInvestigationSummary(incident, evidence, hypotheses);
+  if (aiSummary) return aiSummary;
+
+  // Priority 3: Rule-based fallback
+  return fallbackInvestigationSummary(incident, evidence, hypotheses);
 }
 
 export async function generateRootCauseSummary(
@@ -118,6 +132,15 @@ export async function generateRootCauseSummary(
     return fallbackRootCauseSummary(hypotheses, evidence);
   }
 
+  // Priority 1: Splunk AI Assistant
+  const splunkSummary = await summarizeWithSplunkAI({
+    type: 'rootcause',
+    hypotheses,
+    evidence,
+  });
+  if (splunkSummary) return splunkSummary;
+
+  // Priority 2: OpenAI
   const prompt = `Explain the most likely root cause in 2-3 sentences:
 - Top hypothesis: "${hypotheses[0].type}" with ${Math.round(hypotheses[0].confidence * 100)}% confidence
 - Description: ${hypotheses[0].description}
@@ -125,7 +148,10 @@ export async function generateRootCauseSummary(
 - Other hypotheses: ${hypotheses.slice(1).map((h) => `${h.type} (${Math.round(h.confidence * 100)}%)`).join(', ') || 'none'}`;
 
   const aiSummary = await callOpenAI(prompt);
-  return aiSummary || fallbackRootCauseSummary(hypotheses, evidence);
+  if (aiSummary) return aiSummary;
+
+  // Priority 3: Rule-based fallback
+  return fallbackRootCauseSummary(hypotheses, evidence);
 }
 
 export async function generateRemediationSummary(
@@ -136,6 +162,15 @@ export async function generateRemediationSummary(
     return 'No remediation steps were generated.';
   }
 
+  // Priority 1: Splunk AI Assistant
+  const splunkSummary = await summarizeWithSplunkAI({
+    type: 'remediation',
+    steps,
+    hypotheses,
+  });
+  if (splunkSummary) return splunkSummary;
+
+  // Priority 2: OpenAI
   const prompt = `Summarize this remediation plan in 2-3 sentences:
 - ${steps.length} total steps
 - ${steps.filter((s) => s.requiresApproval).length} require approval
@@ -144,7 +179,10 @@ export async function generateRemediationSummary(
 - Key actions: ${steps.slice(0, 3).map((s) => s.action).join('; ')}`;
 
   const aiSummary = await callOpenAI(prompt);
-  return aiSummary || fallbackRemediationSummary(steps, hypotheses);
+  if (aiSummary) return aiSummary;
+
+  // Priority 3: Rule-based fallback
+  return fallbackRemediationSummary(steps, hypotheses);
 }
 
 export async function generateExecutiveSummary(
@@ -155,6 +193,15 @@ export async function generateExecutiveSummary(
   const end = new Date(incident.endTime);
   const durationMin = Math.round((end.getTime() - start.getTime()) / 60000);
 
+  // Priority 1: Splunk AI Assistant
+  const splunkSummary = await summarizeWithSplunkAI({
+    type: 'executive',
+    incident,
+    result,
+  });
+  if (splunkSummary) return splunkSummary;
+
+  // Priority 2: OpenAI
   const prompt = `Write a concise executive summary (2-3 sentences) for this incident:
 - Title: "${incident.title}"
 - Service: ${incident.service}, Severity: ${incident.severity}
@@ -165,5 +212,8 @@ export async function generateExecutiveSummary(
 - Description: ${incident.description}`;
 
   const aiSummary = await callOpenAI(prompt);
-  return aiSummary || fallbackExecutiveSummary(incident, result);
+  if (aiSummary) return aiSummary;
+
+  // Priority 3: Rule-based fallback
+  return fallbackExecutiveSummary(incident, result);
 }

@@ -15,6 +15,7 @@ import RemediationChecklist from '@/components/RemediationChecklist';
 import ReportPreview from '@/components/ReportPreview';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import SplunkHealthBadge from '@/components/SplunkHealthBadge';
 
 type Tab = 'select' | 'investigation' | 'rootcause' | 'remediation' | 'report';
 
@@ -317,6 +318,7 @@ export default function Home() {
               </span>
             </div>
           )}
+          <SplunkHealthBadge />
         </div>
       </header>
 

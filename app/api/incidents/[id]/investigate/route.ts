@@ -5,9 +5,10 @@ import { generateQueries } from '@/lib/analysis/queryGenerator';
 import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { collectLiveEvidence } from '@/lib/analysis/liveEvidenceCollector';
 import { maskSensitiveFields } from '@/lib/analysis/evidenceNormalizer';
-import { analyzeRootCause } from '@/lib/analysis/rootCauseAnalyzer';
+import { analyzeRootCause, analyzeRootCauseWithML } from '@/lib/analysis/rootCauseAnalyzer';
 import { generateRemediation } from '@/lib/analysis/remediationEngine';
 import { getSplunkConfig, isConfigured } from '@/lib/splunk/config';
+import { runMLAnalysis } from '@/lib/analysis/splunkMLAnalyzer';
 
 /**
  * POST /api/incidents/[id]/investigate
@@ -108,7 +109,20 @@ export async function POST(
 
     // Mask sensitive fields before returning evidence to client
     const evidence = maskSensitiveFields(rawEvidence);
-    const hypotheses = analyzeRootCause(evidence);
+
+    // Run ML analysis and root cause analysis
+    let hypotheses;
+    if (isConfigured(config)) {
+      // Convert ISO timestamps to epoch for ML queries
+      const earliestEpoch = Math.floor(new Date(incident.startTime).getTime() / 1000).toString();
+      const latestEpoch = Math.floor(new Date(incident.endTime).getTime() / 1000).toString();
+
+      const mlInsights = await runMLAnalysis(earliestEpoch, latestEpoch);
+      hypotheses = await analyzeRootCauseWithML(evidence, mlInsights);
+    } else {
+      hypotheses = analyzeRootCause(evidence);
+    }
+
     const remediation = generateRemediation(hypotheses);
 
     const result: InvestigationResult = {

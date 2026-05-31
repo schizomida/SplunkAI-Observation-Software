@@ -172,7 +172,7 @@ describe('POST /api/incidents/[id]/investigate', () => {
     expect(json.success).toBe(true);
     expect(json.data.incidentId).toBe('demo-001');
     expect(json.data.queries).toBeDefined();
-    expect(json.data.queries.length).toBe(5);
+    expect(json.data.queries.length).toBe(12);
     expect(json.data.evidence).toBeDefined();
     expect(json.data.evidence.length).toBeGreaterThan(0);
     expect(json.data.hypotheses).toBeDefined();

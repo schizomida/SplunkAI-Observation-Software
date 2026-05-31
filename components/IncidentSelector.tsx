@@ -15,6 +15,17 @@ const DEMO_INCIDENT: Incident = {
     'P99 checkout latency spiked from 120ms to over 4,200ms, causing a 23% increase in cart abandonment.',
 };
 
+const SEVERITY_OPTIONS: Severity[] = ['low', 'medium', 'high', 'critical'];
+const SOURCETYPE_OPTIONS = ['All', 'app_logs', 'app_metrics', 'app_traces', 'deployment'];
+const QUICK_TIME_RANGES = [
+  { label: 'Last 5m', minutes: 5 },
+  { label: 'Last 15m', minutes: 15 },
+  { label: 'Last 30m', minutes: 30 },
+  { label: 'Last 1h', minutes: 60 },
+  { label: 'Last 4h', minutes: 240 },
+  { label: 'Last 24h', minutes: 1440 },
+];
+
 interface IncidentSelectorProps {
   onSelect: (incident: Incident) => void;
 }
@@ -39,22 +50,47 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [title, setTitle] = useState('');
   const [service, setService] = useState('');
   const [severity, setSeverity] = useState<Severity>('high');
+  const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>(['high', 'critical']);
+  const [allSeverityLevels, setAllSeverityLevels] = useState(false);
+  const [sourcetypeFilter, setSourcetypeFilter] = useState('All');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
 
+  function handleQuickTimeRange(minutes: number) {
+    const now = new Date();
+    const start = new Date(now.getTime() - minutes * 60 * 1000);
+    setStartTime(start.toISOString().slice(0, 16));
+    setEndTime(now.toISOString().slice(0, 16));
+  }
+
+  function toggleSeverity(sev: Severity) {
+    setSelectedSeverities((prev) =>
+      prev.includes(sev) ? prev.filter((s) => s !== sev) : [...prev, sev]
+    );
+  }
+
   function handleSubmitLive(e: React.FormEvent) {
     e.preventDefault();
+
+    const effectiveSeverities = allSeverityLevels ? SEVERITY_OPTIONS : selectedSeverities;
+    const highestSeverity = effectiveSeverities.includes('critical')
+      ? 'critical'
+      : effectiveSeverities.includes('high')
+        ? 'high'
+        : effectiveSeverities.includes('medium')
+          ? 'medium'
+          : 'low';
 
     const incident: Incident = {
       id: `live-${Date.now()}`,
       title: title || `${service} Investigation`,
       service,
-      severity,
+      severity: highestSeverity,
       startTime: startTime ? new Date(startTime).toISOString() : new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       endTime: endTime ? new Date(endTime).toISOString() : new Date().toISOString(),
       mode: 'live',
-      description: description || `Live investigation of ${service}`,
+      description: description || `Live investigation of ${service}${sourcetypeFilter !== 'All' ? ` (sourcetype: ${sourcetypeFilter})` : ''} — severity: ${effectiveSeverities.join(', ')}`,
     };
 
     onSelect(incident);
@@ -153,6 +189,24 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
                 />
               </div>
+
+              {/* Quick Time Range Buttons */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Quick Time Range</label>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_TIME_RANGES.map((range) => (
+                    <button
+                      key={range.label}
+                      type="button"
+                      onClick={() => handleQuickTimeRange(range.minutes)}
+                      className="px-3 py-1.5 text-xs font-medium border border-green-300 rounded-md hover:bg-green-50 text-green-700 transition-colors"
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
@@ -173,19 +227,60 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                   />
                 </div>
               </div>
+
+              {/* Severity Multi-Select */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Severity</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Severity Levels</label>
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="all-severity"
+                    checked={allSeverityLevels}
+                    onChange={(e) => setAllSeverityLevels(e.target.checked)}
+                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <label htmlFor="all-severity" className="text-xs text-gray-600">All Severity Levels</label>
+                </div>
+                {!allSeverityLevels && (
+                  <div className="flex flex-wrap gap-2">
+                    {SEVERITY_OPTIONS.map((sev) => (
+                      <button
+                        key={sev}
+                        type="button"
+                        onClick={() => toggleSeverity(sev)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                          selectedSeverities.includes(sev)
+                            ? sev === 'critical'
+                              ? 'bg-red-100 border-red-300 text-red-800'
+                              : sev === 'high'
+                                ? 'bg-orange-100 border-orange-300 text-orange-800'
+                                : sev === 'medium'
+                                  ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
+                                  : 'bg-green-100 border-green-300 text-green-800'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                        }`}
+                      >
+                        {sev.charAt(0).toUpperCase() + sev.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sourcetype Filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Sourcetype Filter</label>
                 <select
-                  value={severity}
-                  onChange={(e) => setSeverity(e.target.value as Severity)}
+                  value={sourcetypeFilter}
+                  onChange={(e) => setSourcetypeFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
                 >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
+                  {SOURCETYPE_OPTIONS.map((st) => (
+                    <option key={st} value={st}>{st}</option>
+                  ))}
                 </select>
               </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Description (optional)</label>
                 <textarea
