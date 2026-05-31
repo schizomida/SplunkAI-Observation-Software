@@ -7,6 +7,9 @@
  *
  * Tests import route handlers directly and call them with
  * constructed NextRequest objects to verify behavior.
+ *
+ * Note: The investigate and report routes now require a live Splunk connection.
+ * Without SPLUNK_TOKEN and ALLOW_LIVE_SPL=true, they return 503.
  */
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/incidents/route';
@@ -31,18 +34,7 @@ function createGetRequest(url = 'http://localhost:3000/api/incidents'): NextRequ
 
 describe('POST /api/incidents', () => {
   beforeEach(() => {
-    // Clear store but keep demo incident
     incidentStore.clear();
-    incidentStore.set('demo-001', {
-      id: 'demo-001',
-      title: 'Checkout Service Latency Spike',
-      service: 'checkout-service',
-      severity: 'high',
-      startTime: '2024-01-15T10:00:00Z',
-      endTime: '2024-01-15T10:30:00Z',
-      mode: 'demo',
-      description: 'Demo incident for testing.',
-    });
   });
 
   it('creates an incident successfully with valid body', async () => {
@@ -53,7 +45,7 @@ describe('POST /api/incidents', () => {
       severity: 'medium',
       startTime: '2024-01-15T10:00:00Z',
       endTime: '2024-01-15T10:30:00Z',
-      mode: 'demo',
+      mode: 'live',
       description: 'A test incident',
     };
 
@@ -76,7 +68,7 @@ describe('POST /api/incidents', () => {
       severity: 'low',
       startTime: '2024-01-15T10:00:00Z',
       endTime: '2024-01-15T10:30:00Z',
-      mode: 'demo',
+      mode: 'live',
       description: 'Incident without id',
     };
 
@@ -112,27 +104,27 @@ describe('POST /api/incidents', () => {
 describe('GET /api/incidents/[id]', () => {
   beforeEach(() => {
     incidentStore.clear();
-    incidentStore.set('demo-001', {
-      id: 'demo-001',
-      title: 'Checkout Service Latency Spike',
-      service: 'checkout-service',
+    incidentStore.set('test-001', {
+      id: 'test-001',
+      title: 'Test Incident',
+      service: 'test-service',
       severity: 'high',
       startTime: '2024-01-15T10:00:00Z',
       endTime: '2024-01-15T10:30:00Z',
-      mode: 'demo',
-      description: 'Demo incident for testing.',
+      mode: 'live',
+      description: 'Test incident for testing.',
     });
   });
 
   it('returns the incident when found', async () => {
-    const request = createGetRequest('http://localhost:3000/api/incidents/demo-001');
-    const response = await GET_BY_ID(request, { params: { id: 'demo-001' } });
+    const request = createGetRequest('http://localhost:3000/api/incidents/test-001');
+    const response = await GET_BY_ID(request, { params: { id: 'test-001' } });
     const json = await response.json();
 
     expect(response.status).toBe(200);
     expect(json.success).toBe(true);
-    expect(json.data.id).toBe('demo-001');
-    expect(json.data.title).toBe('Checkout Service Latency Spike');
+    expect(json.data.id).toBe('test-001');
+    expect(json.data.title).toBe('Test Incident');
     expect(json.error).toBeNull();
   });
 
@@ -151,106 +143,70 @@ describe('GET /api/incidents/[id]', () => {
 describe('POST /api/incidents/[id]/investigate', () => {
   beforeEach(() => {
     incidentStore.clear();
-    incidentStore.set('demo-001', {
-      id: 'demo-001',
-      title: 'Checkout Service Latency Spike',
-      service: 'checkout-service',
-      severity: 'high',
-      startTime: '2024-01-15T10:00:00Z',
-      endTime: '2024-01-15T10:30:00Z',
-      mode: 'demo',
-      description: 'Demo incident for testing.',
-    });
-  });
-
-  it('returns investigation result for demo incident', async () => {
-    const request = createPostRequest({}, 'http://localhost:3000/api/incidents/demo-001/investigate');
-    const response = await POST_INVESTIGATE(request, { params: { id: 'demo-001' } });
-    const json = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(json.success).toBe(true);
-    expect(json.data.incidentId).toBe('demo-001');
-    expect(json.data.queries).toBeDefined();
-    expect(json.data.queries.length).toBe(12);
-    expect(json.data.evidence).toBeDefined();
-    expect(json.data.evidence.length).toBeGreaterThan(0);
-    expect(json.data.hypotheses).toBeDefined();
-    expect(json.data.remediation).toBeDefined();
-    expect(json.data.analyzedAt).toBeDefined();
-  });
-
-  it('returns 404 for unknown incident', async () => {
-    const request = createPostRequest({}, 'http://localhost:3000/api/incidents/unknown/investigate');
-    const response = await POST_INVESTIGATE(request, { params: { id: 'unknown' } });
-    const json = await response.json();
-
-    expect(response.status).toBe(404);
-    expect(json.success).toBe(false);
-    expect(json.error).toBe('Incident not found');
-  });
-
-  it('returns 200 for live mode incident (falls back to demo if Splunk unavailable)', async () => {
-    incidentStore.set('live-001', {
-      id: 'live-001',
-      title: 'Live Incident',
-      service: 'live-service',
+    incidentStore.set('test-001', {
+      id: 'test-001',
+      title: 'Test Incident',
+      service: 'test-service',
       severity: 'high',
       startTime: '2024-01-15T10:00:00Z',
       endTime: '2024-01-15T10:30:00Z',
       mode: 'live',
-      description: 'A live mode incident.',
+      description: 'Test incident for testing.',
     });
+  });
 
-    const request = createPostRequest({}, 'http://localhost:3000/api/incidents/live-001/investigate');
-    const response = await POST_INVESTIGATE(request, { params: { id: 'live-001' } });
+  it('returns 503 when Splunk is not configured', async () => {
+    const request = createPostRequest({}, 'http://localhost:3000/api/incidents/test-001/investigate');
+    const response = await POST_INVESTIGATE(request, { params: { id: 'test-001' } });
     const json = await response.json();
 
-    // Live mode now attempts Splunk and falls back to demo data gracefully
-    expect(response.status).toBe(200);
-    expect(json.success).toBe(true);
-    expect(json.data.incidentId).toBe('live-001');
-    expect(json.data.evidence).toBeDefined();
+    expect(response.status).toBe(503);
+    expect(json.success).toBe(false);
+    expect(json.error).toBe('Splunk connection required. Configure SPLUNK_TOKEN and ALLOW_LIVE_SPL=true.');
+  });
+
+  it('returns 503 for unknown incident when Splunk is not configured', async () => {
+    const request = createPostRequest({}, 'http://localhost:3000/api/incidents/unknown/investigate');
+    const response = await POST_INVESTIGATE(request, { params: { id: 'unknown' } });
+    const json = await response.json();
+
+    // 503 takes precedence over 404 since Splunk check happens first
+    expect(response.status).toBe(503);
+    expect(json.success).toBe(false);
   });
 });
 
 describe('GET /api/incidents/[id]/report', () => {
   beforeEach(() => {
     incidentStore.clear();
-    incidentStore.set('demo-001', {
-      id: 'demo-001',
-      title: 'Checkout Service Latency Spike',
-      service: 'checkout-service',
+    incidentStore.set('test-001', {
+      id: 'test-001',
+      title: 'Test Incident',
+      service: 'test-service',
       severity: 'high',
       startTime: '2024-01-15T10:00:00Z',
       endTime: '2024-01-15T10:30:00Z',
-      mode: 'demo',
-      description: 'Demo incident for testing.',
+      mode: 'live',
+      description: 'Test incident for testing.',
     });
   });
 
-  it('returns the report for a known incident', async () => {
-    const request = createGetRequest('http://localhost:3000/api/incidents/demo-001/report');
-    const response = await GET_REPORT(request, { params: { id: 'demo-001' } });
+  it('returns 503 when Splunk is not configured', async () => {
+    const request = createGetRequest('http://localhost:3000/api/incidents/test-001/report');
+    const response = await GET_REPORT(request, { params: { id: 'test-001' } });
     const json = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(json.success).toBe(true);
-    expect(json.data.incidentId).toBe('demo-001');
-    expect(json.data.sections).toBeDefined();
-    expect(json.data.sections.length).toBe(6);
-    expect(json.data.markdown).toBeDefined();
-    expect(json.data.markdown).toContain('Checkout Service Latency Spike');
-    expect(json.data.generatedAt).toBeDefined();
+    expect(response.status).toBe(503);
+    expect(json.success).toBe(false);
+    expect(json.error).toBe('Splunk connection required. Configure SPLUNK_TOKEN and ALLOW_LIVE_SPL=true.');
   });
 
-  it('returns 404 for unknown incident', async () => {
+  it('returns 503 for unknown incident when Splunk is not configured', async () => {
     const request = createGetRequest('http://localhost:3000/api/incidents/unknown/report');
     const response = await GET_REPORT(request, { params: { id: 'unknown' } });
     const json = await response.json();
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(503);
     expect(json.success).toBe(false);
-    expect(json.error).toBe('Incident not found');
   });
 });

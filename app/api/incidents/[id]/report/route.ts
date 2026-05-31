@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { ApiResponse, IncidentReport, Incident } from '@/lib/types';
 import { incidentStore } from '@/lib/splunk/incidentStore';
 import { generateQueries } from '@/lib/analysis/queryGenerator';
-import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { collectLiveEvidence } from '@/lib/analysis/liveEvidenceCollector';
 import { maskSensitiveFields } from '@/lib/analysis/evidenceNormalizer';
 import { analyzeRootCause } from '@/lib/analysis/rootCauseAnalyzer';
@@ -12,8 +11,8 @@ import { getSplunkConfig, isConfigured } from '@/lib/splunk/config';
 
 /**
  * Shared handler for both GET and POST.
- * POST allows passing the incident in the request body as a fallback
- * when the in-memory store doesn't have it (dev mode module isolation).
+ * Requires a live Splunk connection (SPLUNK_TOKEN + ALLOW_LIVE_SPL=true).
+ * Returns 503 if Splunk is not configured.
  */
 async function handleReport(
   request: NextRequest,
@@ -24,6 +23,15 @@ async function handleReport(
     return NextResponse.json(
       { success: false, data: null, error: 'Invalid incident id', timestamp: new Date().toISOString() },
       { status: 400 }
+    );
+  }
+
+  // Require live Splunk connection
+  const config = getSplunkConfig();
+  if (!isConfigured(config)) {
+    return NextResponse.json(
+      { success: false, data: null, error: 'Splunk connection required. Configure SPLUNK_TOKEN and ALLOW_LIVE_SPL=true.', timestamp: new Date().toISOString() },
+      { status: 503 }
     );
   }
 
@@ -50,25 +58,11 @@ async function handleReport(
   }
 
   try {
-    // Run investigation pipeline
+    // Run investigation pipeline with live Splunk data
     const queries = generateQueries(incident);
 
-    const config = getSplunkConfig();
-    const useLive = isConfigured(config);
-
-    let rawEvidence;
-    if (useLive) {
-      try {
-        rawEvidence = await collectLiveEvidence(queries);
-        if (rawEvidence.length === 0) {
-          rawEvidence = loadDemoEvidence();
-        }
-      } catch {
-        rawEvidence = loadDemoEvidence();
-      }
-    } else {
-      rawEvidence = loadDemoEvidence();
-    }
+    console.log(`[Report] Running live queries against Splunk for incident ${id}`);
+    const rawEvidence = await collectLiveEvidence(queries);
 
     const evidence = maskSensitiveFields(rawEvidence);
     const hypotheses = analyzeRootCause(evidence);

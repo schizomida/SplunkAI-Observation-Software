@@ -1,5 +1,4 @@
 import { analyzeRootCause } from '@/lib/analysis/rootCauseAnalyzer';
-import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { RootCauseHypothesisSchema } from '@/lib/shared/validation';
 import type { EvidenceItem } from '@/lib/types';
 
@@ -185,8 +184,14 @@ describe('analyzeRootCause', () => {
     }
   });
 
-  it('with the full demo evidence, multiple hypotheses are returned', () => {
-    const evidence = loadDemoEvidence();
+  it('with mixed evidence types, multiple hypotheses are returned', () => {
+    const evidence: EvidenceItem[] = [
+      makeEvidence({ id: 'dep-1', type: 'deployment', summary: 'Deployed v2.0' }),
+      makeEvidence({ id: 'err-1', type: 'log', data: { level: 'ERROR' }, summary: 'Connection failed' }),
+      makeEvidence({ id: 'err-2', type: 'log', data: { level: 'ERROR' }, summary: 'Timeout error' }),
+      makeEvidence({ id: 'to-1', type: 'log', summary: 'Redis connection timeout after 5000ms' }),
+      makeEvidence({ id: 'res-1', type: 'metric', summary: 'Connection pool saturation at 98%' }),
+    ];
     const result = analyzeRootCause(evidence);
     expect(result.length).toBeGreaterThan(1);
     // Verify sort order is maintained

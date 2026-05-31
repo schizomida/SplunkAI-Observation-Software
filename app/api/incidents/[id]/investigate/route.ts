@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { ApiResponse, InvestigationResult } from '@/lib/types';
 import { incidentStore } from '@/lib/splunk/incidentStore';
 import { generateQueries } from '@/lib/analysis/queryGenerator';
-import { loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { collectLiveEvidence } from '@/lib/analysis/liveEvidenceCollector';
 import { maskSensitiveFields } from '@/lib/analysis/evidenceNormalizer';
 import { analyzeRootCause, analyzeRootCauseWithML } from '@/lib/analysis/rootCauseAnalyzer';
@@ -14,12 +13,10 @@ import { runMLAnalysis } from '@/lib/analysis/splunkMLAnalyzer';
  * POST /api/incidents/[id]/investigate
  * Runs the full investigation pipeline for the given incident.
  *
- * Strategy:
- * 1. Look up incident from store, or accept it in the request body
- * 2. If Splunk is configured (token + ALLOW_LIVE_SPL=true): run live queries
- * 3. If mode is 'demo' or Splunk is not configured: use demo evidence
+ * Requires a live Splunk connection (SPLUNK_TOKEN + ALLOW_LIVE_SPL=true).
+ * Returns 503 if Splunk is not configured.
  *
- * Pipeline: generateQueries → evidence (live or demo) → analyzeRootCause → generateRemediation
+ * Pipeline: generateQueries → collectLiveEvidence → analyzeRootCause → generateRemediation
  */
 export async function POST(
   request: NextRequest,
@@ -40,20 +37,32 @@ export async function POST(
     );
   }
 
+  // Require live Splunk connection
+  const config = getSplunkConfig();
+  if (!isConfigured(config)) {
+    return NextResponse.json(
+      {
+        success: false,
+        data: null,
+        error: 'Splunk connection required. Configure SPLUNK_TOKEN and ALLOW_LIVE_SPL=true.',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 503 }
+    );
+  }
+
   // Try to find incident in store first, then fall back to request body
   let incident = incidentStore.get(id);
 
   if (!incident) {
-    // Try to parse incident from request body as fallback
     try {
       const body = await request.json();
       if (body && body.id === id) {
         incident = body as typeof incident;
-        // Store it for future lookups
         incidentStore.set(id, incident!);
       }
     } catch {
-      // No body or invalid JSON — that's fine, we'll 404 below
+      // No body or invalid JSON
     }
   }
 
@@ -73,55 +82,19 @@ export async function POST(
     // Generate investigation queries
     const queries = generateQueries(incident);
 
-    // Determine evidence source: live Splunk or demo data
-    const config = getSplunkConfig();
-    const useLive = isConfigured(config) && incident.mode === 'live';
-    const useLiveAuto = isConfigured(config) && incident.mode === 'demo';
-
-    let rawEvidence;
-    let evidenceSource: string;
-
-    if (useLive || useLiveAuto) {
-      // Try live Splunk first
-      try {
-        console.log(`[Investigate] Running live queries against Splunk for incident ${id}`);
-        rawEvidence = await collectLiveEvidence(queries);
-
-        // If live returned no results, fall back to demo
-        if (rawEvidence.length === 0 && incident.mode === 'demo') {
-          console.log(`[Investigate] Live queries returned no results, falling back to demo data`);
-          rawEvidence = loadDemoEvidence();
-          evidenceSource = 'demo (live returned empty)';
-        } else {
-          evidenceSource = 'live-splunk';
-        }
-      } catch (error) {
-        // If live fails and mode is demo, fall back gracefully
-        console.error(`[Investigate] Live Splunk failed, falling back to demo:`, error instanceof Error ? error.message : error);
-        rawEvidence = loadDemoEvidence();
-        evidenceSource = 'demo (live failed)';
-      }
-    } else {
-      // Use demo evidence
-      rawEvidence = loadDemoEvidence();
-      evidenceSource = 'demo';
-    }
+    // Collect live evidence from Splunk
+    console.log(`[Investigate] Running live queries against Splunk for incident ${id}`);
+    const rawEvidence = await collectLiveEvidence(queries);
 
     // Mask sensitive fields before returning evidence to client
     const evidence = maskSensitiveFields(rawEvidence);
 
     // Run ML analysis and root cause analysis
-    let hypotheses;
-    if (isConfigured(config)) {
-      // Convert ISO timestamps to epoch for ML queries
-      const earliestEpoch = Math.floor(new Date(incident.startTime).getTime() / 1000).toString();
-      const latestEpoch = Math.floor(new Date(incident.endTime).getTime() / 1000).toString();
+    const earliestEpoch = Math.floor(new Date(incident.startTime).getTime() / 1000).toString();
+    const latestEpoch = Math.floor(new Date(incident.endTime).getTime() / 1000).toString();
 
-      const mlInsights = await runMLAnalysis(earliestEpoch, latestEpoch);
-      hypotheses = await analyzeRootCauseWithML(evidence, mlInsights);
-    } else {
-      hypotheses = analyzeRootCause(evidence);
-    }
+    const mlInsights = await runMLAnalysis(earliestEpoch, latestEpoch);
+    const hypotheses = await analyzeRootCauseWithML(evidence, mlInsights);
 
     const remediation = generateRemediation(hypotheses);
 
@@ -134,7 +107,7 @@ export async function POST(
       analyzedAt: new Date().toISOString(),
     };
 
-    console.log(`[Investigate] Complete — source: ${evidenceSource}, evidence: ${evidence.length}, hypotheses: ${hypotheses.length}`);
+    console.log(`[Investigate] Complete — evidence: ${evidence.length}, hypotheses: ${hypotheses.length}`);
 
     return NextResponse.json(
       {

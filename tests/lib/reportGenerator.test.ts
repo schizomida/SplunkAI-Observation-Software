@@ -1,27 +1,79 @@
 import { generateReport } from '@/lib/reporting/reportGenerator';
-import { loadDemoIncident, loadDemoEvidence } from '@/lib/analysis/demoLoader';
 import { analyzeRootCause } from '@/lib/analysis/rootCauseAnalyzer';
 import { generateRemediation } from '@/lib/analysis/remediationEngine';
 import { generateQueries } from '@/lib/analysis/queryGenerator';
 import { IncidentReportSchema } from '@/lib/shared/validation';
-import type { Incident, InvestigationResult } from '@/lib/types';
+import type { Incident, InvestigationResult, EvidenceItem } from '@/lib/types';
 
 // ── Test Setup ────────────────────────────────────────────────────────────────
+
+const testIncident: Incident = {
+  id: 'test-001',
+  title: 'Checkout Service Latency Spike',
+  service: 'checkout-service',
+  severity: 'high',
+  startTime: '2024-01-15T10:00:00Z',
+  endTime: '2024-01-15T10:30:00Z',
+  mode: 'live',
+  description: 'P99 checkout latency spiked from 120ms to over 4,200ms.',
+};
+
+const testEvidence: EvidenceItem[] = [
+  {
+    id: 'log-1',
+    type: 'log',
+    timestamp: '2024-01-15T10:05:00Z',
+    source: 'checkout-service',
+    data: { level: 'ERROR', message: 'Redis connection timeout' },
+    summary: '[ERROR] checkout-service: Redis connection timeout after 5000ms',
+  },
+  {
+    id: 'log-2',
+    type: 'log',
+    timestamp: '2024-01-15T10:06:00Z',
+    source: 'payment-service',
+    data: { level: 'ERROR', message: 'Retry exhaustion' },
+    summary: '[ERROR] payment-service: Retry exhaustion on downstream call',
+  },
+  {
+    id: 'metric-1',
+    type: 'metric',
+    timestamp: '2024-01-15T10:04:00Z',
+    source: 'checkout-service',
+    data: { name: 'p99_latency', value: 4200 },
+    summary: 'Metric series "p99_latency" (ms) for checkout-service — 10 data points',
+  },
+  {
+    id: 'deployment-1',
+    type: 'deployment',
+    timestamp: '2024-01-15T09:52:00Z',
+    source: 'payment-service',
+    data: { version: 'v2.4.1', previousVersion: 'v2.4.0' },
+    summary: 'Deployment of payment-service v2.4.1 (prev: v2.4.0) to production by deploy-bot',
+  },
+  {
+    id: 'trace-1',
+    type: 'trace',
+    timestamp: '2024-01-15T10:07:00Z',
+    source: 'checkout-flow',
+    data: { traceId: 'abc123', spans: 5 },
+    summary: 'Trace abc123 — 5 spans, 2 error/timeout span(s) rooted at checkout-flow',
+  },
+];
 
 let incident: Incident;
 let result: InvestigationResult;
 
 beforeAll(() => {
-  incident = loadDemoIncident();
-  const evidence = loadDemoEvidence();
-  const hypotheses = analyzeRootCause(evidence);
+  incident = testIncident;
+  const hypotheses = analyzeRootCause(testEvidence);
   const remediation = generateRemediation(hypotheses);
   const queries = generateQueries(incident);
 
   result = {
     incidentId: incident.id,
     queries,
-    evidence,
+    evidence: testEvidence,
     hypotheses,
     remediation,
     analyzedAt: new Date().toISOString(),
@@ -84,7 +136,6 @@ describe('generateReport', () => {
     const report = generateReport(incident, result);
     const rca = report.sections.find((s) => s.title === 'Root Cause Analysis');
     expect(rca).toBeDefined();
-    // The demo data should produce at least one hypothesis type
     for (const hypothesis of result.hypotheses) {
       expect(rca!.content).toContain(hypothesis.type);
     }
@@ -94,7 +145,6 @@ describe('generateReport', () => {
     const report = generateReport(incident, result);
     const checklist = report.sections.find((s) => s.title === 'Remediation Checklist');
     expect(checklist).toBeDefined();
-    // Should mention at least the first remediation step action
     expect(checklist!.content).toContain(result.remediation[0].action);
   });
 
@@ -123,7 +173,6 @@ describe('generateReport', () => {
 
   it('report has a valid generatedAt ISO timestamp', () => {
     const report = generateReport(incident, result);
-    // Should be a valid ISO 8601 datetime
     const date = new Date(report.generatedAt);
     expect(date.toISOString()).toBe(report.generatedAt);
   });
