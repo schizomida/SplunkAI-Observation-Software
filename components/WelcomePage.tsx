@@ -47,7 +47,7 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
       <div className={`relative z-10 text-center px-6 max-w-2xl transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {/* Logo / Title */}
         <div className="mb-8">
-          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 mb-6 animate-glow transition-all duration-700 ${exiting ? 'scale-[3] rotate-[720deg] opacity-0' : ''}`}>
+          <div className={`inline-flex items-center justify-center w-20 h-20 mb-6 animate-glow transition-all duration-700 ${exiting ? 'scale-[3] rotate-[720deg] opacity-0' : ''}`}>
             <WizardMascot reaction={exiting ? 'celebrating' : 'idle'} size="lg" />
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-4">
