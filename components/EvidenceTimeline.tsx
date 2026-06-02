@@ -192,7 +192,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
       <div className="relative">
         <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500/40 via-white/10 to-transparent" />
         <div className="space-y-3">
-          {displayed.map((item) => {
+          {displayed.map((item, index) => {
             const config = typeConfig[item.type] || {
               color: 'bg-gray-500',
               bgColor: 'bg-white/10 border-white/20 text-white/70',
@@ -202,13 +202,14 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
             };
             const isExpanded = expandedId === item.id;
             const relatedQuery = getRelatedQuery(item.type);
+            const staggerClass = index < 10 ? `stagger-${index + 1}` : '';
 
             return (
-              <div key={item.id} className="relative pl-10">
+              <div key={item.id} className={`relative pl-10 animate-fade-in-up opacity-0 ${staggerClass}`} style={{ animationFillMode: 'forwards' }}>
                 <div className={`absolute left-2.5 top-3 w-3 h-3 rounded-full ${config.color} ring-2 ring-white/20 shadow-sm`} />
                 <div
                   onClick={() => handleItemClick(item.id)}
-                  className={`border border-white/10 rounded-lg p-3 bg-white/5 backdrop-blur shadow-sm cursor-pointer transition-all hover:bg-white/10 hover:border-white/20 ${isExpanded ? 'ring-1 ring-indigo-500/50' : ''}`}
+                  className={`border border-white/10 rounded-lg p-3 bg-white/5 backdrop-blur shadow-sm cursor-pointer transition-all hover:bg-white/10 hover:border-white/20 hover:translate-x-1 ${isExpanded ? 'ring-1 ring-indigo-500/50' : ''}`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm">{config.icon}</span>
@@ -225,7 +226,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
 
                 {/* Expanded detail panel */}
                 {isExpanded && (
-                  <div className="mt-2 border border-white/10 rounded-lg p-4 bg-white/5 backdrop-blur animate-fade-in-up">
+                  <div className="mt-2 border border-white/10 rounded-lg p-4 bg-white/5 backdrop-blur animate-scale-in overflow-hidden">
                     <div className="mb-3">
                       <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-2">Raw Data</p>
                       <pre className="bg-gray-900/80 text-sm p-3 rounded-lg overflow-x-auto border border-white/10">

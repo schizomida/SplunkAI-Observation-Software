@@ -24,7 +24,7 @@ export default function LoadingSkeleton() {
     <div className="max-w-lg mx-auto py-12">
       {/* Spinner */}
       <div className="flex justify-center mb-8">
-        <div className="relative">
+        <div className="relative shimmer rounded-full">
           <div className="w-16 h-16 rounded-full border-4 border-white/10" />
           <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-t-indigo-400 animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -61,7 +61,7 @@ export default function LoadingSkeleton() {
           >
             <div className="flex-shrink-0">
               {i < currentStep ? (
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white text-xs">✓</span>
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500 text-white text-xs animate-scale-in">✓</span>
               ) : i === currentStep ? (
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500 text-white text-xs animate-pulse">
                   {i + 1}

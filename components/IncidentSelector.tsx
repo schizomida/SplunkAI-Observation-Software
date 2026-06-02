@@ -256,7 +256,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
           <button
             onClick={handleQuickLive}
-            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 btn-press"
+            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md hover:translate-y-[-2px] hover:shadow-lg hover:shadow-emerald-500/20 flex items-center justify-center gap-2 btn-press"
           >
             <span>🔍</span>
             <span>Investigate Last 30 Days</span>
@@ -264,7 +264,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
           <button
             onClick={() => { playClickSound(); setShowForm(!showForm); }}
-            className="w-full mt-3 py-2 px-4 border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-300 font-medium rounded-lg transition-all duration-200 text-sm btn-press"
+            className="w-full mt-3 py-2 px-4 border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-300 font-medium rounded-lg transition-all duration-300 text-sm btn-press"
           >
             {showForm ? '▲ Hide Custom Form' : '▼ Custom Investigation...'}
           </button>
@@ -272,7 +272,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
           {showForm && (
             <form onSubmit={handleSubmitLive} className="mt-4 space-y-3 animate-fade-in-up">
               {/* Service Name Dropdown */}
-              <div>
+              <div className="stagger-1 animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
                 <label className="block text-xs font-medium text-white/70 mb-1">Service Name</label>
                 {!showCustomService ? (
                   <select
@@ -308,7 +308,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                 )}
               </div>
 
-              <div>
+              <div className="stagger-2 animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
                 <label className="block text-xs font-medium text-white/70 mb-1">Title (optional)</label>
                 <input
                   type="text"
@@ -320,9 +320,9 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
               </div>
 
               {/* Time Range Slider */}
-              <div>
+              <div className="stagger-3 animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
                 <label className="block text-xs font-medium text-white/70 mb-2">Time Range</label>
-                <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 shimmer">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-white/50">1 Day</span>
                     <span className="text-sm font-bold text-emerald-300">{formatDaysLabel(sliderToDays(timeSlider))}</span>
@@ -400,7 +400,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
               </div>
 
               {/* Severity Multi-Select */}
-              <div>
+              <div className="stagger-4 animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
                 <label className="block text-xs font-medium text-white/70 mb-1">Severity Levels</label>
                 <div className="flex items-center gap-2 mb-2">
                   <input
@@ -439,7 +439,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
               </div>
 
               {/* Sourcetype Filter */}
-              <div>
+              <div className="stagger-5 animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
                 <label className="block text-xs font-medium text-white/70 mb-1">Sourcetype Filter</label>
                 <select
                   value={sourcetypeFilter}

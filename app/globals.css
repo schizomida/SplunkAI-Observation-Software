@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Global Smooth Transitions ─────────────────────────────────────────── */
+
+/* All interactive elements get smooth transitions by default */
+button, a, select, input, textarea {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Smooth opacity transitions for content changes */
+[class*="animate-"] {
+  will-change: transform, opacity;
+}
+
 :root {
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 15, 23, 42;
@@ -98,6 +118,36 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes contentSwitch {
+  0% { opacity: 0; transform: translateX(10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes contentExit {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-10px); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes completedFlash {
+  0% { background-color: rgba(34, 197, 94, 0.2); }
+  100% { background-color: transparent; }
+}
+
 /* ─── Utilities ─────────────────────────────────────────────────────────── */
 
 @layer utilities {
@@ -173,6 +223,40 @@ body {
   .stagger-3 { animation-delay: 0.3s; }
   .stagger-4 { animation-delay: 0.4s; }
   .stagger-5 { animation-delay: 0.5s; }
+  .stagger-6 { animation-delay: 0.6s; }
+  .stagger-7 { animation-delay: 0.7s; }
+  .stagger-8 { animation-delay: 0.8s; }
+  .stagger-9 { animation-delay: 0.9s; }
+  .stagger-10 { animation-delay: 1.0s; }
+
+  .animate-content-switch {
+    animation: contentSwitch 0.3s ease-out forwards;
+  }
+
+  .animate-breathe {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Smooth tab content transitions */
+  .tab-content-enter {
+    animation: contentSwitch 0.25s ease-out forwards;
+  }
+
+  /* Bounce checkbox effect */
+  .check-bounce {
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* Green flash for completed items */
+  .complete-flash {
+    animation: completedFlash 0.5s ease-out forwards;
+  }
 
   /* Gradient header — animated */
   .gradient-header {

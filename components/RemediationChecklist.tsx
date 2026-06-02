@@ -252,24 +252,25 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
 
       {/* Steps */}
       <div className="space-y-3">
-        {filtered.map((step) => {
+        {filtered.map((step, index) => {
           const isCompleted = completedSteps.has(step.id);
           const isHighlighted = highlightedStepId === step.id;
           return (
             <div
               key={step.id}
               ref={isHighlighted ? highlightRef : undefined}
-              className={`border border-white/10 border-l-4 ${riskBorderColor(step.riskLevel)} rounded-lg p-4 bg-white/5 backdrop-blur shadow-sm transition-all ${
-                isCompleted ? 'opacity-60' : ''
+              className={`border border-white/10 border-l-4 ${riskBorderColor(step.riskLevel)} rounded-lg p-4 bg-white/5 backdrop-blur shadow-sm transition-all duration-200 hover:translate-x-1 animate-fade-in-up opacity-0 ${
+                isCompleted ? 'opacity-60 complete-flash' : ''
               } ${isHighlighted ? 'ring-2 ring-emerald-400 glow-ring-animation' : ''}`}
+              style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}
             >
               <div className="flex items-start gap-3">
                 <button
                   onClick={() => toggleStep(step.id)}
                   className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
                     isCompleted
-                      ? 'bg-green-500 border-green-500 text-white'
-                      : 'border-white/30 hover:border-indigo-400'
+                      ? 'bg-green-500 border-green-500 text-white check-bounce'
+                      : 'border-white/30 hover:border-indigo-400 hover:scale-110'
                   }`}
                 >
                   {isCompleted ? (

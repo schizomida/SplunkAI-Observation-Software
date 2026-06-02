@@ -332,7 +332,7 @@ export default function Home() {
           </div>
           {incident && (
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-              <span className={`px-2 py-0.5 text-xs font-bold rounded border ${severityBadgeColor(incident.severity)}`}>
+              <span className={`px-2 py-0.5 text-xs font-bold rounded border ${severityBadgeColor(incident.severity)} hover:scale-[1.02] transition-transform`}>
                 {incident.severity.toUpperCase()}
               </span>
               <span className="text-sm text-white/90 font-medium">{incident.title}</span>
@@ -392,7 +392,7 @@ export default function Home() {
 
       {/* Status banner */}
       {incident && !loading && !error && (
-        <div className="bg-white/5 border-b border-white/10">
+        <div className="bg-white/5 border-b border-white/10 transition-all duration-300">
           <div className="max-w-6xl mx-auto px-6 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs text-white/60">
               <span className="flex items-center gap-1">
@@ -432,7 +432,9 @@ export default function Home() {
       {/* Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         <ErrorBoundary onRetry={handleRetry}>
-          {renderTabContent()}
+          <div key={activeTab} className="tab-content-enter">
+            {renderTabContent()}
+          </div>
         </ErrorBoundary>
       </div>
     </main>
