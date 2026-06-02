@@ -26,6 +26,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [searchText, setSearchText] = useState('');
+  const [severityFilter, setSeverityFilter] = useState<string | null>(null);
 
   if (evidence.length === 0) {
     return <p className="text-white/50 text-center">No evidence collected.</p>;
@@ -36,11 +37,35 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
     typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
   }
 
+  // Extract severity levels from evidence data
+  const severityLevels = Array.from(
+    new Set(
+      evidence
+        .map((item) => {
+          const data = item.data as Record<string, unknown> | null;
+          if (data && typeof data === 'object' && 'level' in data && typeof data.level === 'string') {
+            return data.level.toUpperCase();
+          }
+          return null;
+        })
+        .filter((level): level is string => level !== null)
+    )
+  );
+
   const sources = Array.from(new Set(evidence.map((e) => e.source)));
 
   let filtered = [...evidence]
     .filter((item) => !filterType || item.type === filterType)
-    .filter((item) => !searchText || item.summary.toLowerCase().includes(searchText.toLowerCase()));
+    .filter((item) => !searchText || item.summary.toLowerCase().includes(searchText.toLowerCase()))
+    .filter((item) => {
+      if (!severityFilter) return true;
+      const data = item.data as Record<string, unknown> | null;
+      if (data && typeof data === 'object' && 'level' in data && typeof data.level === 'string') {
+        return data.level.toUpperCase() === severityFilter;
+      }
+      // Non-log items always pass severity filter
+      return true;
+    });
 
   // Sort based on mode
   const sorted = filtered.sort((a, b) => {
@@ -127,6 +152,41 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
           className="flex-1 min-w-[150px] px-3 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-indigo-500"
         />
       </div>
+
+      {/* Severity filter */}
+      {severityLevels.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-white/50 font-medium">Severity:</span>
+          <button
+            onClick={() => setSeverityFilter(null)}
+            className={`px-2 py-0.5 text-xs font-medium rounded-full border transition-colors ${
+              !severityFilter ? 'bg-white/20 text-white border-white/30' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
+            }`}
+          >
+            All
+          </button>
+          {severityLevels.map((level) => {
+            const levelColors: Record<string, string> = {
+              ERROR: 'bg-red-500/20 text-red-300 border-red-400/30',
+              WARN: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30',
+              INFO: 'bg-blue-500/20 text-blue-300 border-blue-400/30',
+              DEBUG: 'bg-gray-500/20 text-gray-300 border-gray-400/30',
+            };
+            const colorClass = levelColors[level] || 'bg-white/10 text-white/70 border-white/20';
+            return (
+              <button
+                key={level}
+                onClick={() => setSeverityFilter(severityFilter === level ? null : level)}
+                className={`px-2 py-0.5 text-xs font-medium rounded-full border transition-colors ${
+                  severityFilter === level ? 'bg-white/20 text-white border-white/30' : colorClass
+                }`}
+              >
+                {level}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Timeline */}
       <div className="relative">

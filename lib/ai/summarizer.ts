@@ -20,7 +20,27 @@ function fallbackInvestigationSummary(
     ? `${Math.round(topHypothesis.confidence * 100)}%`
     : 'N/A';
 
-  return `Investigation of "${incident.title}" collected ${evidence.length} evidence items across ${types.length} source types (${types.join(', ')}). ${
+  // Count errors
+  const errorCount = evidence.filter((e) => {
+    const data = e.data as Record<string, unknown> | null;
+    return data && typeof data === 'object' && 'level' in data && (data.level === 'ERROR' || data.level === 'error');
+  }).length;
+
+  // Get unique services
+  const services = Array.from(new Set(evidence.map((e) => e.source)));
+
+  // Find earliest timestamp
+  const timestamps = evidence.map((e) => new Date(e.timestamp).getTime()).sort((a, b) => a - b);
+  const earliestAnomaly = timestamps.length > 0 ? new Date(timestamps[0]).toLocaleTimeString() : 'unknown';
+
+  // Primary signal source
+  const sourceCounts: Record<string, number> = {};
+  for (const e of evidence) {
+    sourceCounts[e.source] = (sourceCounts[e.source] || 0) + 1;
+  }
+  const primarySource = Object.entries(sourceCounts).sort(([, a], [, b]) => b - a)[0]?.[0] || 'unknown';
+
+  return `Investigation of "${incident.title}" detected ${errorCount > 0 ? `${errorCount} error events` : `${evidence.length} evidence items`} across ${services.length} service${services.length !== 1 ? 's' : ''}, with the earliest anomaly at ${earliestAnomaly}. The primary signal comes from ${primarySource} where ${types.join('/')} patterns were observed. ${
     topHypothesis
       ? `The leading hypothesis points to ${topHypothesis.type} with ${confidence} confidence.`
       : 'No root cause hypotheses were generated.'
@@ -36,7 +56,16 @@ function fallbackRootCauseSummary(
   }
   const top = hypotheses[0];
   const pct = Math.round(top.confidence * 100);
-  return `The most likely root cause is "${top.type}" with ${pct}% confidence. ${top.description} This conclusion is supported by ${top.supportingEvidence.length} pieces of evidence.`;
+
+  // Identify specific patterns from supporting evidence
+  const supportingItems = evidence.filter((e) => top.supportingEvidence.includes(e.id));
+  const evidenceTypes = Array.from(new Set(supportingItems.map((e) => e.type)));
+  const patternDesc = evidenceTypes.length > 0 ? evidenceTypes.join(', ') + ' anomalies' : 'correlated signals';
+
+  // First recommended action
+  const firstAction = top.recommendedActions[0] || 'investigate further';
+
+  return `The ${top.type} hypothesis suggests that ${top.description} This is supported by ${top.supportingEvidence.length} evidence item${top.supportingEvidence.length !== 1 ? 's' : ''} showing ${patternDesc}. Recommended immediate action: ${firstAction}.`;
 }
 
 function fallbackRemediationSummary(
@@ -45,7 +74,22 @@ function fallbackRemediationSummary(
 ): string {
   const approvalCount = steps.filter((s) => s.requiresApproval).length;
   const highRisk = steps.filter((s) => s.riskLevel === 'high').length;
-  return `${steps.length} remediation steps have been generated. ${approvalCount} require manual approval and ${highRisk} are high-risk operations. Follow the steps in order to resolve the incident safely.`;
+
+  // Parse estimated times
+  const totalMinutes = steps.reduce((acc, step) => {
+    const match = step.estimatedTime.match(/(\d+)/);
+    return acc + (match ? parseInt(match[1], 10) : 5);
+  }, 0);
+
+  // First and second actions
+  const firstAction = steps[0]?.action || 'initial step';
+  const secondAction = steps[1]?.action || 'follow-up';
+
+  // High-risk steps summary
+  const highRiskSteps = steps.filter((s) => s.riskLevel === 'high').map((s) => s.action);
+  const criticalPath = highRiskSteps.length > 0 ? highRiskSteps.join(', ') : 'none identified';
+
+  return `Start with "${firstAction}" (~${steps[0]?.estimatedTime || '5 min'}), then proceed to "${secondAction}". Critical path: ${criticalPath}. Total estimated time: ~${totalMinutes} min. ${approvalCount} step${approvalCount !== 1 ? 's' : ''} require${approvalCount === 1 ? 's' : ''} approval and ${highRisk} ${highRisk === 1 ? 'is' : 'are'} high-risk.`;
 }
 
 function fallbackExecutiveSummary(
@@ -57,11 +101,15 @@ function fallbackExecutiveSummary(
   const durationMin = Math.round((end.getTime() - start.getTime()) / 60000);
   const top = result.hypotheses[0];
 
-  return `${incident.severity.toUpperCase()} severity incident on ${incident.service} lasting ${durationMin} minutes. ${
+  // Count affected services
+  const affectedServices = Array.from(new Set(result.evidence.map((e) => e.source)));
+  const approvalNeeded = result.remediation.filter((s) => s.requiresApproval).length;
+
+  return `A ${incident.severity.toUpperCase()} incident on ${incident.service} lasting ${durationMin} minutes impacted ${affectedServices.length} service${affectedServices.length !== 1 ? 's' : ''}. ${
     top
-      ? `Root cause analysis points to ${top.type} (${Math.round(top.confidence * 100)}% confidence).`
+      ? `Root cause analysis identifies ${top.type} as the primary factor (${Math.round(top.confidence * 100)}% confidence).`
       : 'Root cause is still under investigation.'
-  } ${result.remediation.length} remediation steps have been prepared.`;
+  } ${result.remediation.length} remediation steps are ready, with ${approvalNeeded} requiring approval.`;
 }
 
 // ── OpenAI-Powered Summaries ──────────────────────────────────────────────────

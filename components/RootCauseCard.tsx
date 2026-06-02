@@ -6,6 +6,7 @@ import type { RootCauseHypothesis } from '@/lib/types';
 interface RootCauseCardProps {
   hypotheses: RootCauseHypothesis[];
   highlightedType?: string | null;
+  onNavigate?: (tab: string, evidenceType?: string) => void;
 }
 
 type SortMode = 'highest-confidence' | 'lowest-confidence' | 'by-type';
@@ -29,7 +30,7 @@ function getConfidenceLabel(pct: number): string {
   return 'Low';
 }
 
-export default function RootCauseCard({ hypotheses, highlightedType }: RootCauseCardProps) {
+export default function RootCauseCard({ hypotheses, highlightedType, onNavigate }: RootCauseCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('highest-confidence');
   const [filterByType, setFilterByType] = useState<string | null>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -170,6 +171,16 @@ export default function RootCauseCard({ hypotheses, highlightedType }: RootCause
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+            {onNavigate && (
+              <div className="pt-3 mt-3 border-t border-white/10">
+                <button
+                  onClick={() => onNavigate('remediation', hypothesis.type)}
+                  className="px-3 py-1.5 text-xs font-medium bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-lg hover:bg-emerald-500/30 transition-colors"
+                >
+                  Jump to Remediation →
+                </button>
               </div>
             )}
           </div>

@@ -224,6 +224,14 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
             );
           })}
         </div>
+        {!allCompleted && (
+          <button
+            onClick={handleMarkAllComplete}
+            className="ml-auto px-3 py-1 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors btn-press"
+          >
+            ✅ Mark All Complete
+          </button>
+        )}
       </div>
 
       {/* Progress bar */}
@@ -292,18 +300,6 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
           );
         })}
       </div>
-
-      {/* Mark All Complete button */}
-      {!allCompleted && (
-        <div className="text-center pt-2">
-          <button
-            onClick={handleMarkAllComplete}
-            className="px-6 py-2.5 text-sm font-medium bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white rounded-lg transition-all shadow-sm btn-press"
-          >
-            ✅ Mark All Complete
-          </button>
-        </div>
-      )}
     </div>
   );
 }
