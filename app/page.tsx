@@ -9,7 +9,6 @@ import type {
 } from '@/lib/types';
 import WelcomePage from '@/components/WelcomePage';
 import IncidentSelector from '@/components/IncidentSelector';
-import QueryPanel from '@/components/QueryPanel';
 import EvidenceTimeline from '@/components/EvidenceTimeline';
 import RootCauseCard from '@/components/RootCauseCard';
 import RemediationChecklist from '@/components/RemediationChecklist';
@@ -381,7 +380,7 @@ export default function Home() {
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">{tab.icon}</span>
                   {index < TABS.length - 1 && (
-                    <span className="text-white/20 ml-1 hidden lg:inline">→</span>
+                    <span className="text-white/20 ml-1 hidden lg:inline animate-breathe">→</span>
                   )}
                 </button>
               );
@@ -421,9 +420,9 @@ export default function Home() {
                 setActiveTab('select');
                 setAiSummaries({ investigation: null, rootcause: null, remediation: null, executive: null });
               }}
-              className="text-xs text-indigo-300 hover:text-indigo-200 font-medium transition-colors btn-press"
+              className="group text-xs text-indigo-300 hover:text-indigo-200 font-medium transition-colors btn-press"
             >
-              ← New Investigation
+              <span className="inline-block group-hover:-translate-x-1 transition-transform duration-200">←</span> New Investigation
             </button>
           </div>
         </div>

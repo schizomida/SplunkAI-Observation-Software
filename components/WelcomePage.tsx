@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import SplunkHealthBadge from './SplunkHealthBadge';
 import WizardMascot from './WizardMascot';
-import { playStartSound, playClickSound } from '@/lib/sounds';
+import { playStartSound } from '@/lib/sounds';
 
 interface WelcomePageProps {
   onStart: () => void;
@@ -82,7 +82,7 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
         <div className={`transition-all duration-700 delay-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
           <button
             onClick={handleStart}
-            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 btn-press glow-indigo"
+            className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 btn-press glow-indigo"
           >
             <span className="text-xl group-hover:scale-110 transition-transform">🚀</span>
             <span>Start Investigation</span>

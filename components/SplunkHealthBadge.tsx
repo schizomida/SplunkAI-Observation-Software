@@ -60,7 +60,7 @@ export default function SplunkHealthBadge() {
     <div className="relative">
       <button
         onClick={() => setShowTooltip(!showTooltip)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-all duration-200 ${showTooltip ? 'scale-105' : ''}`}
       >
         <span
           className={`w-2 h-2 rounded-full ${
@@ -74,7 +74,7 @@ export default function SplunkHealthBadge() {
 
       {/* Tooltip — appears ABOVE the badge */}
       {showTooltip && (
-        <div className="absolute bottom-full right-0 mb-2 w-56 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-auto border border-white/10">
+        <div className="absolute bottom-full right-0 mb-2 w-56 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-xl z-[100] pointer-events-auto border border-white/10">
           {health.connected ? (
             <div className="space-y-1">
               <div className="flex justify-between">

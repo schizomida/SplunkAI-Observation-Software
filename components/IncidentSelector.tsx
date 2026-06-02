@@ -101,7 +101,6 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [title, setTitle] = useState('');
   const [service, setService] = useState(KNOWN_SERVICES[0].value);
   const [customService, setCustomService] = useState('');
-  const [severity, setSeverity] = useState<Severity>('high');
   const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>(['high', 'critical']);
   const [allSeverityLevels, setAllSeverityLevels] = useState(false);
   const [sourcetypeFilter, setSourcetypeFilter] = useState('All');
@@ -116,7 +115,6 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
   // Dynamic service list from Splunk — initialized with hardcoded fallback
   const [availableServices, setAvailableServices] = useState<Array<{ label: string; value: string }>>(KNOWN_SERVICES);
-  const [servicesLoading, setServicesLoading] = useState(false);
   const [showCustomService, setShowCustomService] = useState(false);
 
   // Try to fetch from Splunk in background to update the list
@@ -256,15 +254,16 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
           <button
             onClick={handleQuickLive}
-            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md hover:translate-y-[-2px] hover:shadow-lg hover:shadow-emerald-500/20 flex items-center justify-center gap-2 btn-press"
+            className="w-full py-4 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:translate-y-[-2px] flex items-center justify-center gap-2 btn-press ring-1 ring-emerald-400/20"
           >
             <span>🔍</span>
             <span>Investigate Last 30 Days</span>
           </button>
+          <p className="text-xs text-emerald-300/50 text-center mt-2">Scans all services across all sourcetypes</p>
 
           <button
             onClick={() => { playClickSound(); setShowForm(!showForm); }}
-            className="w-full mt-3 py-2 px-4 border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-300 font-medium rounded-lg transition-all duration-300 text-sm btn-press"
+            className="w-full mt-3 py-2 px-4 bg-white/5 border border-white/20 hover:bg-white/10 text-emerald-300 font-medium rounded-lg transition-all duration-300 text-sm btn-press"
           >
             {showForm ? '▲ Hide Custom Form' : '▼ Custom Investigation...'}
           </button>
@@ -464,7 +463,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-medium rounded-lg transition-all duration-200 shadow-sm btn-press"
+                className="w-full py-4 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:translate-y-[-2px] btn-press ring-1 ring-emerald-400/20"
               >
                 Start Live Investigation
               </button>
