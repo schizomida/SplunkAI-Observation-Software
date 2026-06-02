@@ -9,12 +9,12 @@ interface QueryPanelProps {
 
 function riskBadge(riskLevel: string) {
   const colors: Record<string, string> = {
-    critical: 'bg-red-100 text-red-800 border-red-200',
-    high: 'bg-orange-100 text-orange-800 border-orange-200',
-    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    low: 'bg-green-100 text-green-800 border-green-200',
+    critical: 'bg-red-500/20 text-red-300 border-red-400/30',
+    high: 'bg-orange-500/20 text-orange-300 border-orange-400/30',
+    medium: 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30',
+    low: 'bg-green-500/20 text-green-300 border-green-400/30',
   };
-  return colors[riskLevel] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return colors[riskLevel] || 'bg-white/10 text-white/70 border-white/20';
 }
 
 function riskDot(riskLevel: string) {
@@ -31,7 +31,7 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   if (queries.length === 0) {
-    return <p className="text-gray-500 text-center">No queries generated.</p>;
+    return <p className="text-white/50 text-center">No queries generated.</p>;
   }
 
   function toggleExpand(id: string) {
@@ -61,22 +61,22 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
   return (
     <div className="space-y-4">
       {/* Summary header */}
-      <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3">
+      <div className="flex items-center justify-between bg-indigo-500/10 border border-indigo-400/20 rounded-lg px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-indigo-600 font-medium text-sm">🔍</span>
-          <p className="text-sm text-indigo-800 font-medium">{summaryText}</p>
+          <span className="text-indigo-300 font-medium text-sm">🔍</span>
+          <p className="text-sm text-indigo-300 font-medium">{summaryText}</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={expandAll}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            className="text-xs text-indigo-300 hover:text-indigo-200 font-medium transition-colors"
           >
             Expand all
           </button>
-          <span className="text-gray-300">|</span>
+          <span className="text-white/20">|</span>
           <button
             onClick={collapseAll}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            className="text-xs text-indigo-300 hover:text-indigo-200 font-medium transition-colors"
           >
             Collapse all
           </button>
@@ -89,16 +89,16 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
         return (
           <div
             key={query.id}
-            className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden card-hover"
+            className="border border-white/10 rounded-lg bg-white/5 backdrop-blur shadow-sm overflow-hidden card-hover"
           >
             {/* Collapsible header */}
             <button
               onClick={() => toggleExpand(query.id)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/5 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className={`w-2 h-2 rounded-full ${riskDot(query.riskLevel)}`} />
-                <h4 className="font-semibold text-gray-900 text-sm">{query.name}</h4>
+                <h4 className="font-semibold text-white/90 text-sm">{query.name}</h4>
               </div>
               <div className="flex items-center gap-2">
                 <span
@@ -106,7 +106,7 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
                 >
                   {query.riskLevel}
                 </span>
-                <span className="text-gray-400 text-xs transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <span className="text-white/40 text-xs transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
                   ▼
                 </span>
               </div>
@@ -114,10 +114,10 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
 
             {/* Expandable content */}
             {isExpanded && (
-              <div className="px-4 pb-4 border-t border-gray-100 animate-fade-in-up">
-                <p className="text-sm text-gray-600 mt-3 mb-3">{query.description}</p>
+              <div className="px-4 pb-4 border-t border-white/10 animate-fade-in-up">
+                <p className="text-sm text-white/60 mt-3 mb-3">{query.description}</p>
                 <div className="relative">
-                  <pre className="bg-gray-900 text-sm p-4 rounded-lg overflow-x-auto">
+                  <pre className="bg-gray-900/80 text-sm p-4 rounded-lg overflow-x-auto border border-white/10">
                     <code className="text-green-300 font-mono leading-relaxed">{query.spl}</code>
                   </pre>
                   <button
@@ -125,7 +125,7 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
                       e.stopPropagation();
                       navigator.clipboard.writeText(query.spl);
                     }}
-                    className="absolute top-2 right-2 px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                    className="absolute top-2 right-2 px-2 py-1 text-xs bg-white/10 hover:bg-white/20 text-white/70 rounded transition-colors"
                     title="Copy SPL"
                   >
                     📋 Copy

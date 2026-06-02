@@ -28,7 +28,7 @@ function getConfidenceLabel(pct: number): string {
 export default function RootCauseCard({ hypotheses }: RootCauseCardProps) {
   if (hypotheses.length === 0) {
     return (
-      <p className="text-gray-500 text-center">No hypotheses generated.</p>
+      <p className="text-white/50 text-center">No hypotheses generated.</p>
     );
   }
 
@@ -38,8 +38,8 @@ export default function RootCauseCard({ hypotheses }: RootCauseCardProps) {
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
-        <p className="text-sm text-amber-800 font-medium">
+      <div className="bg-amber-500/10 border border-amber-400/20 rounded-lg px-4 py-3">
+        <p className="text-sm text-amber-300 font-medium">
           🧠 Top hypothesis: <span className="font-bold">{topHypothesis.type}</span> with{' '}
           <span className="font-bold">{topConfidence}%</span> confidence
           {hypotheses.length > 1 && ` — ${hypotheses.length - 1} alternative ${hypotheses.length - 1 === 1 ? 'hypothesis' : 'hypotheses'} also considered`}
@@ -56,35 +56,35 @@ export default function RootCauseCard({ hypotheses }: RootCauseCardProps) {
         return (
           <div
             key={hypothesis.id}
-            className={`border rounded-xl p-5 bg-white shadow-sm transition-all ${
-              isTop ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-gray-200'
+            className={`border rounded-xl p-5 bg-white/5 backdrop-blur shadow-sm transition-all ${
+              isTop ? 'border-indigo-400/30 ring-1 ring-indigo-500/20' : 'border-white/10'
             }`}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
-                  isTop ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
+                  isTop ? 'bg-indigo-500 text-white' : 'bg-white/10 text-white/60'
                 }`}>
                   {getRankLabel(index)}
                 </span>
-                <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
+                <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
                   {hypothesis.type}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-lg font-bold text-gray-900">{confidencePct}%</span>
-                <span className="text-xs text-gray-500 block">{label}</span>
+                <span className="text-lg font-bold text-white">{confidencePct}%</span>
+                <span className="text-xs text-white/50 block">{label}</span>
               </div>
             </div>
 
-            <p className="text-sm text-gray-700 mb-4 leading-relaxed">
+            <p className="text-sm text-white/70 mb-4 leading-relaxed">
               {hypothesis.description}
             </p>
 
             {/* Confidence bar */}
             <div className="mb-4">
-              <div className="w-full bg-gray-100 rounded-full h-2.5">
+              <div className="w-full bg-white/10 rounded-full h-2.5">
                 <div
                   className={`h-2.5 rounded-full bg-gradient-to-r ${gradient} transition-all duration-500`}
                   style={{ width: `${confidencePct}%` }}
@@ -93,7 +93,7 @@ export default function RootCauseCard({ hypotheses }: RootCauseCardProps) {
             </div>
 
             {/* Evidence count */}
-            <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+            <div className="flex items-center gap-4 text-xs text-white/50 mb-3">
               <span className="flex items-center gap-1">
                 📎 {hypothesis.supportingEvidence.length} supporting evidence
               </span>
@@ -101,14 +101,14 @@ export default function RootCauseCard({ hypotheses }: RootCauseCardProps) {
 
             {/* Recommended actions */}
             {hypothesis.recommendedActions.length > 0 && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+              <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                <p className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wide">
                   Recommended Actions
                 </p>
                 <ul className="space-y-1">
                   {hypothesis.recommendedActions.map((action, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                      <span className="text-indigo-500 mt-0.5">→</span>
+                    <li key={i} className="flex items-start gap-2 text-xs text-white/60">
+                      <span className="text-indigo-400 mt-0.5">→</span>
                       <span>{action}</span>
                     </li>
                   ))}

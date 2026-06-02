@@ -25,8 +25,8 @@ export default function LoadingSkeleton() {
       {/* Spinner */}
       <div className="flex justify-center mb-8">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full border-4 border-indigo-100" />
-          <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-t-indigo-600 animate-spin" />
+          <div className="w-16 h-16 rounded-full border-4 border-white/10" />
+          <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-t-indigo-400 animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="text-lg">{LOADING_STEPS[currentStep].icon}</span>
           </div>
@@ -35,13 +35,13 @@ export default function LoadingSkeleton() {
 
       {/* Current step message */}
       <div className="text-center mb-8">
-        <p className="text-lg font-medium text-gray-900">
+        <p className="text-lg font-medium text-white">
           {LOADING_STEPS[currentStep].message}
           <span className="loading-dot-1">.</span>
           <span className="loading-dot-2">.</span>
           <span className="loading-dot-3">.</span>
         </p>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-white/50 mt-1">
           Step {currentStep + 1} of {LOADING_STEPS.length}
         </p>
       </div>
@@ -53,10 +53,10 @@ export default function LoadingSkeleton() {
             key={i}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300 ${
               i < currentStep
-                ? 'bg-green-50 border border-green-200'
+                ? 'bg-green-500/10 border border-green-400/20'
                 : i === currentStep
-                  ? 'bg-indigo-50 border border-indigo-200 animate-fade-in-up'
-                  : 'bg-gray-50 border border-gray-100 opacity-50'
+                  ? 'bg-indigo-500/10 border border-indigo-400/20 animate-fade-in-up'
+                  : 'bg-white/5 border border-white/10 opacity-50'
             }`}
           >
             <div className="flex-shrink-0">
@@ -67,7 +67,7 @@ export default function LoadingSkeleton() {
                   {i + 1}
                 </span>
               ) : (
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-xs">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white/50 text-xs">
                   {i + 1}
                 </span>
               )}
@@ -75,10 +75,10 @@ export default function LoadingSkeleton() {
             <span
               className={`text-sm font-medium ${
                 i < currentStep
-                  ? 'text-green-700'
+                  ? 'text-green-300'
                   : i === currentStep
-                    ? 'text-indigo-700'
-                    : 'text-gray-400'
+                    ? 'text-indigo-300'
+                    : 'text-white/40'
               }`}
             >
               {step.message}
@@ -89,7 +89,7 @@ export default function LoadingSkeleton() {
       </div>
 
       {/* Progress bar */}
-      <div className="mt-6 w-full bg-gray-200 rounded-full h-1.5">
+      <div className="mt-6 w-full bg-white/10 rounded-full h-1.5">
         <div
           className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-700"
           style={{ width: `${((currentStep + 1) / LOADING_STEPS.length) * 100}%` }}

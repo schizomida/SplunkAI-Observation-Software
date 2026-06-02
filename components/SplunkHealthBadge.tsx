@@ -14,11 +14,12 @@ interface HealthStatus {
  *
  * - Green dot + "Connected" when Splunk is reachable
  * - Red dot + "Disconnected" when not
- * - Shows Splunk version on hover
+ * - Click to toggle tooltip with details
  */
 export default function SplunkHealthBadge() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
     async function checkHealth() {
@@ -55,49 +56,49 @@ export default function SplunkHealthBadge() {
 
   if (!health) return null;
 
-  const tooltipText = health.connected
-    ? `Splunk v${health.version} | ${health.indexes} indexes | MLTK: ${health.mltkInstalled ? 'Yes' : 'No'}`
-    : 'Splunk is not reachable. Check SPLUNK_HOST, SPLUNK_TOKEN, and ALLOW_LIVE_SPL settings.';
-
   return (
-    <div
-      className="relative group flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm cursor-default"
-      title={tooltipText}
-    >
-      <span
-        className={`w-2 h-2 rounded-full ${
-          health.connected ? 'bg-green-400' : 'bg-red-400'
-        }`}
-      />
-      <span className="text-xs text-white/90 font-medium">
-        {health.connected ? 'Connected' : 'Disconnected'}
-      </span>
+    <div className="relative">
+      <button
+        onClick={() => setShowTooltip(!showTooltip)}
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-colors"
+      >
+        <span
+          className={`w-2 h-2 rounded-full ${
+            health.connected ? 'bg-emerald-400' : 'bg-red-400'
+          }`}
+        />
+        <span className={`text-xs font-medium ${health.connected ? 'text-emerald-400' : 'text-red-400'}`}>
+          {health.connected ? 'Connected' : 'Disconnected'}
+        </span>
+      </button>
 
-      {/* Tooltip on hover */}
-      <div className="absolute top-full right-0 mt-2 w-56 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-        {health.connected ? (
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Version:</span>
-              <span className="font-medium">{health.version}</span>
+      {/* Tooltip — appears ABOVE the badge */}
+      {showTooltip && (
+        <div className="absolute bottom-full right-0 mb-2 w-56 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-auto border border-white/10">
+          {health.connected ? (
+            <div className="space-y-1">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Version:</span>
+                <span className="font-medium">{health.version}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Indexes:</span>
+                <span className="font-medium">{health.indexes}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">MLTK:</span>
+                <span className={`font-medium ${health.mltkInstalled ? 'text-green-400' : 'text-yellow-400'}`}>
+                  {health.mltkInstalled ? 'Installed' : 'Not Found'}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Indexes:</span>
-              <span className="font-medium">{health.indexes}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">MLTK:</span>
-              <span className={`font-medium ${health.mltkInstalled ? 'text-green-400' : 'text-yellow-400'}`}>
-                {health.mltkInstalled ? 'Installed' : 'Not Found'}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <p className="text-gray-300">
-            Not connected to Splunk. Ensure SPLUNK_TOKEN and ALLOW_LIVE_SPL=true are set.
-          </p>
-        )}
-      </div>
+          ) : (
+            <p className="text-gray-300">
+              Not connected to Splunk. Ensure SPLUNK_TOKEN and ALLOW_LIVE_SPL=true are set.
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

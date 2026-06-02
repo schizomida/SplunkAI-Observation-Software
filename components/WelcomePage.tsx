@@ -16,6 +16,7 @@ const FEATURES = [
 
 export default function WelcomePage({ onStart }: WelcomePageProps) {
   const [mounted, setMounted] = useState(false);
+  const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     // Trigger entrance animations after mount
@@ -25,11 +26,13 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
 
   function handleStart() {
     playStartSound();
-    onStart();
+    setExiting(true);
+    // Wait for animation to finish
+    setTimeout(() => onStart(), 600);
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950">
+    <div className={`min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 transition-all duration-600 ${exiting ? 'animate-explode-out' : ''}`}>
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-float" />

@@ -3,17 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 241, 245, 249;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 30, 27, 75;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
     135deg,
-    rgb(var(--background-start-rgb)),
-    rgb(var(--background-end-rgb))
+    rgb(15, 23, 42),
+    rgb(30, 27, 75),
+    rgb(53, 22, 74)
   );
   min-height: 100vh;
 }
@@ -29,12 +30,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ─── Keyframes ─────────────────────────────────────────────────────────── */
@@ -86,6 +87,17 @@ body {
   to { transform: scaleX(1); }
 }
 
+@keyframes explodeOut {
+  0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+  50% { transform: scale(1.15); opacity: 0.8; filter: brightness(2); }
+  100% { transform: scale(1.3); opacity: 0; filter: brightness(3); }
+}
+
+@keyframes scaleInApp {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* ─── Utilities ─────────────────────────────────────────────────────────── */
 
 @layer utilities {
@@ -107,7 +119,7 @@ body {
 
   /* Glassmorphism */
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl;
   }
 
   /* Glow effects */
@@ -139,6 +151,12 @@ body {
   }
   .animate-scale-in {
     animation: scaleIn 0.3s ease-out forwards;
+  }
+  .animate-explode-out {
+    animation: explodeOut 0.6s ease-out forwards;
+  }
+  .animate-scale-in-app {
+    animation: scaleInApp 0.5s ease-out forwards;
   }
 
   /* Button press effect */
@@ -174,9 +192,9 @@ body {
     background: linear-gradient(90deg, #22c55e, #10b981);
   }
 
-  /* AI summary card */
+  /* AI summary card - dark theme */
   .ai-summary-card {
-    @apply relative overflow-hidden rounded-lg border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-purple-50 p-4;
+    @apply relative overflow-hidden rounded-lg border border-indigo-500/30 bg-gradient-to-r from-indigo-900/50 via-white/5 to-purple-900/50 p-4;
   }
   .ai-summary-card::before {
     content: '';

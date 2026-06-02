@@ -6,6 +6,16 @@ import { playClickSound } from '@/lib/sounds';
 
 const SEVERITY_OPTIONS: Severity[] = ['low', 'medium', 'high', 'critical'];
 
+const KNOWN_SERVICES = [
+  'checkout-service',
+  'inventory-service',
+  'notification-service',
+  'user-auth',
+  'payment-api',
+  'payment-service',
+  'order-confirmation-service',
+];
+
 const SOURCETYPE_OPTIONS = [
   'All',
   'app_logs',
@@ -45,7 +55,7 @@ interface IncidentSelectorProps {
 export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
-  const [service, setService] = useState('');
+  const [service, setService] = useState(KNOWN_SERVICES[0]);
   const [customService, setCustomService] = useState('');
   const [severity, setSeverity] = useState<Severity>('high');
   const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>(['high', 'critical']);
@@ -55,17 +65,17 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
 
-  // Dynamic service list from Splunk
-  const [availableServices, setAvailableServices] = useState<string[]>([]);
-  const [servicesLoading, setServicesLoading] = useState(true);
+  // Dynamic service list from Splunk — initialized with hardcoded fallback
+  const [availableServices, setAvailableServices] = useState<string[]>(KNOWN_SERVICES);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [showCustomService, setShowCustomService] = useState(false);
 
-  // Fetch services from Splunk on mount (with timeout)
+  // Try to fetch from Splunk in background to update the list
   useEffect(() => {
     async function fetchServices() {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const timeout = setTimeout(() => controller.abort(), 10000);
 
         const res = await fetch('/api/splunk/services', { signal: controller.signal });
         clearTimeout(timeout);
@@ -78,9 +88,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
           }
         }
       } catch {
-        // Splunk not available or timeout — user can type manually
-      } finally {
-        setServicesLoading(false);
+        // Splunk not available or timeout — keep using hardcoded list
       }
     }
     fetchServices();
@@ -167,42 +175,42 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Hero Section */}
       <div className="text-center py-6 animate-fade-in-up">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-medium mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-medium mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
           AI-Powered Incident Investigation
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-white mb-2">
           Configure Your Investigation
         </h2>
-        <p className="text-gray-600 max-w-md mx-auto">
+        <p className="text-white/60 max-w-md mx-auto">
           Connect to your live Splunk instance and investigate real observability data.
           SignalSage will query Splunk, analyze evidence, and generate actionable remediation steps.
         </p>
       </div>
 
       {/* Live Splunk Section */}
-      <div className="relative overflow-hidden rounded-xl border-2 border-green-200 p-6 shadow-sm bg-gradient-to-br from-green-50 via-white to-emerald-50 glass-card animate-fade-in-up">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
+      <div className="relative overflow-hidden rounded-xl border border-emerald-500/30 p-6 shadow-sm bg-white/5 backdrop-blur-xl animate-fade-in-up">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50" />
         <div className="relative">
           <div className="flex items-center gap-2 mb-3">
             <div className="relative">
-              <span className="w-3 h-3 rounded-full bg-green-500 inline-block" />
-              <span className="absolute inset-0 w-3 h-3 rounded-full bg-green-500 pulse-ring" />
+              <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
+              <span className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-400 pulse-ring" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-white">
               Live Splunk Investigation
             </h3>
-            <span className="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+            <span className="ml-auto px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
               LIVE
             </span>
           </div>
-          <p className="text-sm text-gray-600 mb-5">
+          <p className="text-sm text-white/60 mb-5">
             Connect to your real Splunk instance and investigate live observability data in real-time.
           </p>
 
           <button
             onClick={handleQuickLive}
-            className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 btn-press"
+            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 btn-press"
           >
             <span>🔍</span>
             <span>Investigate Last 30 Minutes</span>
@@ -210,7 +218,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
           <button
             onClick={() => { playClickSound(); setShowForm(!showForm); }}
-            className="w-full mt-3 py-2 px-4 border border-green-300 hover:bg-green-50 text-green-800 font-medium rounded-lg transition-all duration-200 text-sm btn-press"
+            className="w-full mt-3 py-2 px-4 border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-300 font-medium rounded-lg transition-all duration-200 text-sm btn-press"
           >
             {showForm ? '▲ Hide Custom Form' : '▼ Custom Investigation...'}
           </button>
@@ -219,37 +227,33 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
             <form onSubmit={handleSubmitLive} className="mt-4 space-y-3 animate-fade-in-up">
               {/* Service Name Dropdown */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Service Name</label>
-                {servicesLoading ? (
-                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-400 animate-pulse">
-                    Loading services from Splunk...
-                  </div>
-                ) : availableServices.length > 0 && !showCustomService ? (
+                <label className="block text-xs font-medium text-white/70 mb-1">Service Name</label>
+                {!showCustomService ? (
                   <select
                     value={service}
                     onChange={(e) => handleServiceChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                   >
                     {availableServices.map((svc) => (
-                      <option key={svc} value={svc}>{svc}</option>
+                      <option key={svc} value={svc} className="bg-gray-900 text-white">{svc}</option>
                     ))}
-                    <option value="__custom__">Custom...</option>
+                    <option value="__custom__" className="bg-gray-900 text-white">Custom...</option>
                   </select>
                 ) : (
                   <div className="space-y-2">
                     <input
                       type="text"
-                      value={showCustomService ? customService : service}
-                      onChange={(e) => showCustomService ? setCustomService(e.target.value) : setService(e.target.value)}
+                      value={customService}
+                      onChange={(e) => setCustomService(e.target.value)}
                       placeholder="e.g., checkout-service, payment-api"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                       required
                     />
-                    {showCustomService && availableServices.length > 0 && (
+                    {availableServices.length > 0 && (
                       <button
                         type="button"
                         onClick={() => { setShowCustomService(false); setService(availableServices[0]); }}
-                        className="text-xs text-green-600 hover:text-green-800 font-medium"
+                        className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
                       >
                         ← Back to service list
                       </button>
@@ -259,26 +263,26 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Title (optional)</label>
+                <label className="block text-xs font-medium text-white/70 mb-1">Title (optional)</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g., Latency Spike Investigation"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                 />
               </div>
 
               {/* Quick Time Range Buttons */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Quick Time Range</label>
+                <label className="block text-xs font-medium text-white/70 mb-1">Quick Time Range</label>
                 <div className="flex flex-wrap gap-2">
                   {QUICK_TIME_RANGES.map((range) => (
                     <button
                       key={range.label}
                       type="button"
                       onClick={() => handleQuickTimeRange(range.minutes)}
-                      className="px-3 py-1.5 text-xs font-medium border border-green-300 rounded-md hover:bg-green-50 text-green-700 transition-colors btn-press"
+                      className="px-3 py-1.5 text-xs font-medium border border-emerald-500/30 rounded-md hover:bg-emerald-500/10 text-emerald-300 transition-colors btn-press"
                     >
                       {range.label}
                     </button>
@@ -288,37 +292,37 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Start Time</label>
+                  <label className="block text-xs font-medium text-white/70 mb-1">Start Time</label>
                   <input
                     type="datetime-local"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">End Time</label>
+                  <label className="block text-xs font-medium text-white/70 mb-1">End Time</label>
                   <input
                     type="datetime-local"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                   />
                 </div>
               </div>
 
               {/* Severity Multi-Select */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Severity Levels</label>
+                <label className="block text-xs font-medium text-white/70 mb-1">Severity Levels</label>
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="checkbox"
                     id="all-severity"
                     checked={allSeverityLevels}
                     onChange={(e) => setAllSeverityLevels(e.target.checked)}
-                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    className="rounded border-white/30 bg-white/10 text-emerald-500 focus:ring-emerald-500"
                   />
-                  <label htmlFor="all-severity" className="text-xs text-gray-600">All Severity Levels</label>
+                  <label htmlFor="all-severity" className="text-xs text-white/60">All Severity Levels</label>
                 </div>
                 {!allSeverityLevels && (
                   <div className="flex flex-wrap gap-2">
@@ -330,13 +334,13 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                         className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors btn-press ${
                           selectedSeverities.includes(sev)
                             ? sev === 'critical'
-                              ? 'bg-red-100 border-red-300 text-red-800'
+                              ? 'bg-red-500/20 border-red-400/50 text-red-300'
                               : sev === 'high'
-                                ? 'bg-orange-100 border-orange-300 text-orange-800'
+                                ? 'bg-orange-500/20 border-orange-400/50 text-orange-300'
                                 : sev === 'medium'
-                                  ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
-                                  : 'bg-green-100 border-green-300 text-green-800'
-                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                                  ? 'bg-yellow-500/20 border-yellow-400/50 text-yellow-300'
+                                  : 'bg-green-500/20 border-green-400/50 text-green-300'
+                            : 'bg-white/5 border-white/20 text-white/50 hover:bg-white/10'
                         }`}
                       >
                         {sev.charAt(0).toUpperCase() + sev.slice(1)}
@@ -348,31 +352,31 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
               {/* Sourcetype Filter */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Sourcetype Filter</label>
+                <label className="block text-xs font-medium text-white/70 mb-1">Sourcetype Filter</label>
                 <select
                   value={sourcetypeFilter}
                   onChange={(e) => setSourcetypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                 >
                   {SOURCETYPE_OPTIONS.map((st) => (
-                    <option key={st} value={st}>{st}</option>
+                    <option key={st} value={st} className="bg-gray-900 text-white">{st}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Description (optional)</label>
+                <label className="block text-xs font-medium text-white/70 mb-1">Description (optional)</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What are you investigating?"
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-smooth"
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg transition-all duration-200 shadow-sm btn-press"
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-medium rounded-lg transition-all duration-200 shadow-sm btn-press"
               >
                 Start Live Investigation
               </button>
