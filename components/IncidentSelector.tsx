@@ -40,16 +40,57 @@ const SOURCETYPE_OPTIONS = [
   'custom',
 ];
 
-const QUICK_TIME_RANGES = [
-  { label: '48 Hours', minutes: 48 * 60 },
-  { label: '4 Days', minutes: 4 * 24 * 60 },
-  { label: '8 Days', minutes: 8 * 24 * 60 },
-  { label: '16 Days', minutes: 16 * 24 * 60 },
-  { label: '32 Days', minutes: 32 * 24 * 60 },
-  { label: '64 Days', minutes: 64 * 24 * 60 },
-  { label: '128 Days', minutes: 128 * 24 * 60 },
-  { label: '256 Days', minutes: 256 * 24 * 60 },
+const TIME_RANGE_LABELS: Array<{ days: number; label: string }> = [
+  { days: 1, label: '1 Day' },
+  { days: 2, label: '2 Days' },
+  { days: 3, label: '3 Days' },
+  { days: 7, label: '1 Week' },
+  { days: 14, label: '2 Weeks' },
+  { days: 30, label: '1 Month' },
+  { days: 60, label: '2 Months' },
+  { days: 90, label: 'A Quarter' },
+  { days: 180, label: 'Half a Year' },
+  { days: 270, label: '9 Months' },
+  { days: 365, label: '1 Year' },
 ];
+
+/**
+ * Maps a slider value (0-100) to days (1-365) using exponential scale
+ * for smoother feel at lower ranges.
+ */
+function sliderToDays(sliderValue: number): number {
+  // Exponential mapping: 0→1 day, 100→365 days
+  const minDays = 1;
+  const maxDays = 365;
+  const days = Math.round(minDays * Math.pow(maxDays / minDays, sliderValue / 100));
+  return Math.max(1, Math.min(365, days));
+}
+
+function daysToSlider(days: number): number {
+  const minDays = 1;
+  const maxDays = 365;
+  return Math.round(100 * Math.log(days / minDays) / Math.log(maxDays / minDays));
+}
+
+function formatDaysLabel(days: number): string {
+  if (days === 1) return '1 Day';
+  if (days <= 6) return `${days} Days`;
+  if (days === 7) return '1 Week';
+  if (days < 14) return `${days} Days`;
+  if (days === 14) return '2 Weeks';
+  if (days < 28) return `${Math.round(days / 7)} Weeks`;
+  if (days <= 31) return '~1 Month';
+  if (days <= 45) return '~6 Weeks';
+  if (days <= 62) return '~2 Months';
+  if (days <= 93) return '~A Quarter';
+  if (days <= 124) return '~4 Months';
+  if (days <= 155) return '~5 Months';
+  if (days <= 186) return '~Half a Year';
+  if (days <= 279) return `~${Math.round(days / 30)} Months`;
+  if (days <= 330) return '~10 Months';
+  if (days <= 350) return '~11 Months';
+  return '~1 Year';
+}
 
 interface IncidentSelectorProps {
   onSelect: (incident: Incident) => void;
@@ -67,6 +108,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
+  const [timeSlider, setTimeSlider] = useState(50); // default ~30 days
 
   // Refs for datetime pickers
   const startTimeRef = useRef<HTMLInputElement>(null);
@@ -105,13 +147,6 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
     fetchServices();
   }, []);
 
-  function handleQuickTimeRange(minutes: number) {
-    playClickSound();
-    const now = new Date();
-    const start = new Date(now.getTime() - minutes * 60 * 1000);
-    setStartTime(start.toISOString().slice(0, 16));
-    setEndTime(now.toISOString().slice(0, 16));
-  }
 
   function toggleSeverity(sev: Severity) {
     playClickSound();
@@ -284,20 +319,50 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                 />
               </div>
 
-              {/* Quick Time Range Buttons */}
+              {/* Time Range Slider */}
               <div>
-                <label className="block text-xs font-medium text-white/70 mb-1">Quick Time Range</label>
-                <div className="flex flex-wrap gap-2">
-                  {QUICK_TIME_RANGES.map((range) => (
-                    <button
-                      key={range.label}
-                      type="button"
-                      onClick={() => handleQuickTimeRange(range.minutes)}
-                      className="px-3 py-1.5 text-xs font-medium border border-emerald-500/30 rounded-md hover:bg-emerald-500/10 text-emerald-300 transition-colors btn-press"
-                    >
-                      {range.label}
-                    </button>
-                  ))}
+                <label className="block text-xs font-medium text-white/70 mb-2">Time Range</label>
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-white/50">1 Day</span>
+                    <span className="text-sm font-bold text-emerald-300">{formatDaysLabel(sliderToDays(timeSlider))}</span>
+                    <span className="text-xs text-white/50">1 Year</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={timeSlider}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setTimeSlider(val);
+                      const days = sliderToDays(val);
+                      const now = new Date();
+                      const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+                      setStartTime(start.toISOString().slice(0, 16));
+                      setEndTime(now.toISOString().slice(0, 16));
+                    }}
+                    className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-emerald-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-emerald-500/30 [&::-webkit-slider-thumb]:cursor-pointer"
+                  />
+                  <div className="flex justify-between mt-1">
+                    {[1, 7, 30, 90, 180, 365].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => {
+                          playClickSound();
+                          setTimeSlider(daysToSlider(d));
+                          const now = new Date();
+                          const start = new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
+                          setStartTime(start.toISOString().slice(0, 16));
+                          setEndTime(now.toISOString().slice(0, 16));
+                        }}
+                        className="text-[10px] text-white/40 hover:text-emerald-300 transition-colors"
+                      >
+                        {d <= 1 ? '1d' : d <= 7 ? '1w' : d <= 30 ? '1m' : d <= 90 ? '3m' : d <= 180 ? '6m' : '1y'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
