@@ -531,37 +531,14 @@ body {
   animation: witch-sparkle-2 2.5s ease-in-out infinite 1s;
 }
 
-/* ─── Electric Border Animation (investigation complete) ────────────────── */
+/* ─── Breathing Background (investigation complete) ─────────────────────── */
 
-@keyframes electric-border {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 200% 50%; }
+@keyframes bg-breathe {
+  0%, 100% { background-position: 50% 50%; filter: brightness(1); }
+  50% { background-position: 51% 49%; filter: brightness(1.05); }
 }
 
-@keyframes electric-surge {
-  0%, 100% { box-shadow: inset 0 0 1px rgba(56, 189, 248, 0.2), 0 0 3px rgba(56, 189, 248, 0.1); }
-  50% { box-shadow: inset 0 0 3px rgba(56, 189, 248, 0.3), 0 0 6px rgba(56, 189, 248, 0.15); }
-}
-
-.electric-border-active {
-  position: relative;
-  animation: electric-surge 3s ease-in-out infinite;
-}
-
-.electric-border-active::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(90deg, #38bdf8, #0ea5e9, #38bdf8, #0ea5e9, #38bdf8);
-  background-size: 300% 100%;
-  animation: electric-border 4s linear infinite;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.5;
+.bg-breathing {
+  animation: bg-breathe 6s ease-in-out infinite;
+  background-size: 110% 110%;
 }

@@ -319,7 +319,7 @@ export default function Home() {
   }
 
   return (
-    <main className={`min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 animate-scale-in-app${investigation ? ' electric-border-active' : ''}`}>
+    <main className={`min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 animate-scale-in-app${investigation ? ' bg-breathing' : ''}`}>
       {/* Header */}
       <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
