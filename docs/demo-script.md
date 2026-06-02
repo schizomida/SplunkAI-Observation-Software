@@ -33,7 +33,7 @@ Click the incident card to begin the investigation.
 - "This is a realistic incident: P99 checkout latency spiked from 120ms to 4,200ms."
 - "The incident affected the checkout-service and lasted 30 minutes."
 - "In a real scenario, this could be triggered by a PagerDuty or Splunk On-Call alert."
-    
+
 ---
 
 ## Step 3: Review Investigation Queries (1 minute)

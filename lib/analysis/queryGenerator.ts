@@ -41,8 +41,16 @@ export function generateQueries(incident: Incident): InvestigationQuery[] {
   const earliest = toSplunkTime(startTime);
   const latest = toSplunkTime(endTime);
 
-  // Parameters for safe interpolation
-  const params = { service, earliest, latest };
+  // When service is '*' (all services), skip the service filter in queries
+  const isAllServices = service === '*' || service === 'main';
+
+  // Parameters for safe interpolation (only used when we have a specific service)
+  const params: Record<string, string> = isAllServices
+    ? { earliest, latest }
+    : { service, earliest, latest };
+
+  // Build service clause for templates
+  const serviceClause = isAllServices ? '' : 'service={{service}} ';
 
   const queries: InvestigationQuery[] = [
     // ── 1. Error Rate Spike ────────────────────────────────────────────────
@@ -53,7 +61,7 @@ export function generateQueries(incident: Incident): InvestigationQuery[] {
         'Counts error-level events per minute for the incident service ' +
         'during the incident time window to identify when errors began spiking.',
       spl: buildSafeQuery(
-        'index=main sourcetype=app_logs service={{service}} level=ERROR ' +
+        'index=main sourcetype=app_logs ' + serviceClause + 'level=ERROR ' +
           'earliest={{earliest}} latest={{latest}} ' +
           '| timechart span=1m count AS error_count',
         params
@@ -69,7 +77,7 @@ export function generateQueries(incident: Incident): InvestigationQuery[] {
         'Computes p50, p95, and p99 response-time percentiles for the ' +
         'incident service to surface tail-latency degradation.',
       spl: buildSafeQuery(
-        'index=main sourcetype=app_traces service={{service}} ' +
+        'index=main sourcetype=app_traces ' + serviceClause +
           'earliest={{earliest}} latest={{latest}} ' +
           '| stats p50(durationMs) AS p50 ' +
           'p95(durationMs) AS p95 ' +
