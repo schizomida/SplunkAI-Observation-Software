@@ -17,6 +17,7 @@ import ReportPreview from '@/components/ReportPreview';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import SplunkHealthBadge from '@/components/SplunkHealthBadge';
+import WizardMascot from '@/components/WizardMascot';
 import {
   playClickSound,
   playSuccessSound,
@@ -36,6 +37,14 @@ const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
   { id: 'report', label: 'Report', icon: '📋', step: 5 },
 ];
 
+// Map evidence type → hypothesis type for highlighting
+const EVIDENCE_TO_HYPOTHESIS: Record<string, string> = {
+  log: 'error-spike',
+  metric: 'resource-exhaustion',
+  trace: 'performance-degradation',
+  deployment: 'deployment-correlation',
+};
+
 interface AiSummaries {
   investigation: string | null;
   rootcause: string | null;
@@ -43,12 +52,13 @@ interface AiSummaries {
   executive: string | null;
 }
 
+type WizardReaction = 'idle' | 'excited' | 'thinking' | 'celebrating' | 'alert';
+
 export default function Home() {
   const [view, setView] = useState<AppView>('welcome');
   const [activeTab, setActiveTab] = useState<Tab>('select');
   const [incident, setIncident] = useState<Incident | null>(null);
-  const [investigation, setInvestigation] =
-    useState<InvestigationResult | null>(null);
+  const [investigation, setInvestigation] = useState<InvestigationResult | null>(null);
   const [report, setReport] = useState<IncidentReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,14 +68,39 @@ export default function Home() {
     remediation: null,
     executive: null,
   });
+  const [highlightedHypothesis, setHighlightedHypothesis] = useState<string | null>(null);
+  const [highlightedStep, setHighlightedStep] = useState<string | null>(null);
+  const [wizardReaction, setWizardReaction] = useState<WizardReaction>('idle');
 
   function handleStartFromWelcome() {
     setView('main');
   }
 
-  function handleTabChange(tab: Tab | string) {
+  function handleTabChange(tab: Tab | string, evidenceType?: string) {
     playTransitionSound();
     setActiveTab(tab as Tab);
+
+    // Handle highlight from evidence navigation
+    if (evidenceType) {
+      const hypothesisType = EVIDENCE_TO_HYPOTHESIS[evidenceType];
+      if (hypothesisType) {
+        if (tab === 'rootcause') {
+          setHighlightedHypothesis(hypothesisType);
+          setTimeout(() => setHighlightedHypothesis(null), 3000);
+        } else if (tab === 'remediation') {
+          // Highlight first step matching the hypothesis order
+          if (investigation) {
+            const hypothesisIndex = investigation.hypotheses.findIndex(
+              (h) => h.type === hypothesisType
+            );
+            if (hypothesisIndex >= 0 && investigation.remediation[hypothesisIndex]) {
+              setHighlightedStep(investigation.remediation[hypothesisIndex].id);
+              setTimeout(() => setHighlightedStep(null), 3000);
+            }
+          }
+        }
+      }
+    }
   }
 
   // Fetch AI summaries after investigation completes
@@ -86,23 +121,10 @@ export default function Home() {
 
     const [investigationSummary, rootcauseSummary, remediationSummary, executiveSummary] =
       await Promise.allSettled([
-        fetchSummary('investigation', {
-          incident: inc,
-          evidence: result.evidence,
-          hypotheses: result.hypotheses,
-        }),
-        fetchSummary('rootcause', {
-          hypotheses: result.hypotheses,
-          evidence: result.evidence,
-        }),
-        fetchSummary('remediation', {
-          steps: result.remediation,
-          hypotheses: result.hypotheses,
-        }),
-        fetchSummary('executive', {
-          incident: inc,
-          result,
-        }),
+        fetchSummary('investigation', { incident: inc, evidence: result.evidence, hypotheses: result.hypotheses }),
+        fetchSummary('rootcause', { hypotheses: result.hypotheses, evidence: result.evidence }),
+        fetchSummary('remediation', { steps: result.remediation, hypotheses: result.hypotheses }),
+        fetchSummary('executive', { incident: inc, result }),
       ]);
 
     setAiSummaries({
@@ -118,10 +140,10 @@ export default function Home() {
     setIncident(selected);
     setLoading(true);
     setError(null);
+    setWizardReaction('thinking');
     setAiSummaries({ investigation: null, rootcause: null, remediation: null, executive: null });
 
     try {
-      // Register the incident
       const createRes = await fetch('/api/incidents', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,32 +154,23 @@ export default function Home() {
         throw new Error(createData.error || 'Failed to register incident');
       }
 
-      // Run investigation
-      const investigateRes = await fetch(
-        `/api/incidents/${selected.id}/investigate`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(selected),
-        }
-      );
-      const investigateData: ApiResponse<InvestigationResult> =
-        await investigateRes.json();
+      const investigateRes = await fetch(`/api/incidents/${selected.id}/investigate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selected),
+      });
+      const investigateData: ApiResponse<InvestigationResult> = await investigateRes.json();
       if (!investigateData.success || !investigateData.data) {
-        throw new Error(
-          investigateData.error || 'Failed to run investigation'
-        );
+        throw new Error(investigateData.error || 'Failed to run investigation');
       }
       setInvestigation(investigateData.data);
 
-      // Generate report
       const reportRes = await fetch(`/api/incidents/${selected.id}/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selected),
       });
-      const reportData: ApiResponse<IncidentReport> =
-        await reportRes.json();
+      const reportData: ApiResponse<IncidentReport> = await reportRes.json();
       if (!reportData.success || !reportData.data) {
         throw new Error(reportData.error || 'Failed to generate report');
       }
@@ -165,11 +178,14 @@ export default function Home() {
 
       setActiveTab('investigation');
       playSuccessSound();
+      setWizardReaction('excited');
+      setTimeout(() => setWizardReaction('idle'), 3000);
 
-      // Fetch AI summaries in background (non-blocking)
       fetchAiSummaries(selected, investigateData.data);
     } catch (err) {
       playErrorSound();
+      setWizardReaction('alert');
+      setTimeout(() => setWizardReaction('idle'), 3000);
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -241,11 +257,7 @@ export default function Home() {
 
       case 'investigation':
         if (!investigation) {
-          return (
-            <p className="text-white/50 text-center py-8">
-              Select an incident first.
-            </p>
-          );
+          return <p className="text-white/50 text-center py-8">Select an incident first.</p>;
         }
         return (
           <div className="space-y-8 animate-fade-in-up">
@@ -266,41 +278,29 @@ export default function Home() {
 
       case 'rootcause':
         if (!investigation) {
-          return (
-            <p className="text-white/50 text-center py-8">
-              Run an investigation first.
-            </p>
-          );
+          return <p className="text-white/50 text-center py-8">Run an investigation first.</p>;
         }
         return (
           <div className="animate-fade-in-up">
             {renderAiSummary(aiSummaries.rootcause)}
-            <RootCauseCard hypotheses={investigation.hypotheses} />
+            <RootCauseCard hypotheses={investigation.hypotheses} highlightedType={highlightedHypothesis} />
           </div>
         );
 
       case 'remediation':
         if (!investigation) {
-          return (
-            <p className="text-white/50 text-center py-8">
-              Run an investigation first.
-            </p>
-          );
+          return <p className="text-white/50 text-center py-8">Run an investigation first.</p>;
         }
         return (
           <div className="animate-fade-in-up">
             {renderAiSummary(aiSummaries.remediation)}
-            <RemediationChecklist steps={investigation.remediation} />
+            <RemediationChecklist steps={investigation.remediation} highlightedStepId={highlightedStep} />
           </div>
         );
 
       case 'report':
         if (!report) {
-          return (
-            <p className="text-white/50 text-center py-8">
-              Generate a report first.
-            </p>
-          );
+          return <p className="text-white/50 text-center py-8">Generate a report first.</p>;
         }
         return (
           <div className="animate-fade-in-up">
@@ -314,7 +314,6 @@ export default function Home() {
     }
   }
 
-  // Show welcome page
   if (view === 'welcome') {
     return <WelcomePage onStart={handleStartFromWelcome} />;
   }
@@ -325,11 +324,9 @@ export default function Home() {
       <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🔮</span>
+            <WizardMascot reaction={wizardReaction} size="sm" />
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">
-                SignalSage
-              </h1>
+              <h1 className="text-xl font-bold text-white tracking-tight">SignalSage</h1>
               <p className="text-indigo-300/60 text-xs">AI-Powered Incident Investigation</p>
             </div>
           </div>
@@ -338,9 +335,7 @@ export default function Home() {
               <span className={`px-2 py-0.5 text-xs font-bold rounded border ${severityBadgeColor(incident.severity)}`}>
                 {incident.severity.toUpperCase()}
               </span>
-              <span className="text-sm text-white/90 font-medium">
-                {incident.title}
-              </span>
+              <span className="text-sm text-white/90 font-medium">{incident.title}</span>
             </div>
           )}
           <SplunkHealthBadge />
@@ -405,7 +400,7 @@ export default function Home() {
                 Investigation complete
               </span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span>Service: <span className="font-medium text-white/90">{incident.service}</span></span>
+              <span>Service: <span className="font-medium text-white/90">{incident.service === '*' ? 'All' : incident.service}</span></span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <span>Mode: <span className="font-medium text-white/90">{incident.mode}</span></span>
               {investigation && (

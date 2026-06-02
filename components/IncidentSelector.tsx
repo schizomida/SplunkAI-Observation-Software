@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Incident, Severity } from '@/lib/types';
 import { playClickSound } from '@/lib/sounds';
 
 const SEVERITY_OPTIONS: Severity[] = ['low', 'medium', 'high', 'critical'];
 
 const KNOWN_SERVICES = [
-  'checkout-service',
-  'inventory-service',
-  'notification-service',
-  'user-auth',
-  'payment-api',
-  'payment-service',
-  'order-confirmation-service',
+  { label: 'All Services', value: '*' },
+  { label: 'checkout-service', value: 'checkout-service' },
+  { label: 'inventory-service', value: 'inventory-service' },
+  { label: 'notification-service', value: 'notification-service' },
+  { label: 'user-auth', value: 'user-auth' },
+  { label: 'payment-api', value: 'payment-api' },
+  { label: 'payment-service', value: 'payment-service' },
+  { label: 'order-confirmation-service', value: 'order-confirmation-service' },
 ];
 
 const SOURCETYPE_OPTIONS = [
@@ -40,12 +41,14 @@ const SOURCETYPE_OPTIONS = [
 ];
 
 const QUICK_TIME_RANGES = [
-  { label: 'Last 5m', minutes: 5 },
-  { label: 'Last 15m', minutes: 15 },
-  { label: 'Last 30m', minutes: 30 },
-  { label: 'Last 1h', minutes: 60 },
-  { label: 'Last 4h', minutes: 240 },
-  { label: 'Last 24h', minutes: 1440 },
+  { label: '48 Hours', minutes: 48 * 60 },
+  { label: '4 Days', minutes: 4 * 24 * 60 },
+  { label: '8 Days', minutes: 8 * 24 * 60 },
+  { label: '16 Days', minutes: 16 * 24 * 60 },
+  { label: '32 Days', minutes: 32 * 24 * 60 },
+  { label: '64 Days', minutes: 64 * 24 * 60 },
+  { label: '128 Days', minutes: 128 * 24 * 60 },
+  { label: '256 Days', minutes: 256 * 24 * 60 },
 ];
 
 interface IncidentSelectorProps {
@@ -55,7 +58,7 @@ interface IncidentSelectorProps {
 export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
-  const [service, setService] = useState(KNOWN_SERVICES[0]);
+  const [service, setService] = useState(KNOWN_SERVICES[0].value);
   const [customService, setCustomService] = useState('');
   const [severity, setSeverity] = useState<Severity>('high');
   const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>(['high', 'critical']);
@@ -65,8 +68,12 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
 
+  // Refs for datetime pickers
+  const startTimeRef = useRef<HTMLInputElement>(null);
+  const endTimeRef = useRef<HTMLInputElement>(null);
+
   // Dynamic service list from Splunk — initialized with hardcoded fallback
-  const [availableServices, setAvailableServices] = useState<string[]>(KNOWN_SERVICES);
+  const [availableServices, setAvailableServices] = useState<Array<{ label: string; value: string }>>(KNOWN_SERVICES);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [showCustomService, setShowCustomService] = useState(false);
 
@@ -83,8 +90,12 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
         if (res.ok) {
           const data = await res.json();
           if (data.services && data.services.length > 0) {
-            setAvailableServices(data.services);
-            setService(data.services[0]);
+            const fetched = [
+              { label: 'All Services', value: '*' },
+              ...data.services.map((svc: string) => ({ label: svc, value: svc })),
+            ];
+            setAvailableServices(fetched);
+            setService('*');
           }
         }
       } catch {
@@ -140,13 +151,13 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
 
     const incident: Incident = {
       id: `live-${Date.now()}`,
-      title: title || `${effectiveService} Investigation`,
+      title: title || `${effectiveService === '*' ? 'All Services' : effectiveService} Investigation`,
       service: effectiveService,
       severity: highestSeverity,
       startTime: startTime ? new Date(startTime).toISOString() : new Date(Date.now() - 30 * 60 * 1000).toISOString(),
       endTime: endTime ? new Date(endTime).toISOString() : new Date().toISOString(),
       mode: 'live',
-      description: description || `Live investigation of ${effectiveService}${sourcetypeFilter !== 'All' ? ` (sourcetype: ${sourcetypeFilter})` : ''} — severity: ${effectiveSeverities.join(', ')}`,
+      description: description || `Live investigation of ${effectiveService === '*' ? 'all services' : effectiveService}${sourcetypeFilter !== 'All' ? ` (sourcetype: ${sourcetypeFilter})` : ''} — severity: ${effectiveSeverities.join(', ')}`,
     };
 
     onSelect(incident);
@@ -155,17 +166,17 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   function handleQuickLive() {
     playClickSound();
     const now = new Date();
-    const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     const incident: Incident = {
       id: `live-${Date.now()}`,
       title: `Live Investigation — All Services`,
-      service: 'main',
+      service: '*',
       severity: 'high',
-      startTime: thirtyMinAgo.toISOString(),
+      startTime: thirtyDaysAgo.toISOString(),
       endTime: now.toISOString(),
       mode: 'live',
-      description: 'Live investigation using real Splunk data from the last 30 minutes.',
+      description: 'Live investigation using real Splunk data from the last 30 days.',
     };
 
     onSelect(incident);
@@ -213,7 +224,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
             className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2 btn-press"
           >
             <span>🔍</span>
-            <span>Investigate Last 30 Minutes</span>
+            <span>Investigate Last 30 Days</span>
           </button>
 
           <button
@@ -235,7 +246,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                     className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
                   >
                     {availableServices.map((svc) => (
-                      <option key={svc} value={svc} className="bg-gray-900 text-white">{svc}</option>
+                      <option key={svc.value} value={svc.value} className="bg-gray-900 text-white">{svc.label}</option>
                     ))}
                     <option value="__custom__" className="bg-gray-900 text-white">Custom...</option>
                   </select>
@@ -252,7 +263,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                     {availableServices.length > 0 && (
                       <button
                         type="button"
-                        onClick={() => { setShowCustomService(false); setService(availableServices[0]); }}
+                        onClick={() => { setShowCustomService(false); setService(availableServices[0].value); }}
                         className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
                       >
                         ← Back to service list
@@ -293,21 +304,33 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-white/70 mb-1">Start Time</label>
-                  <input
-                    type="datetime-local"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
-                  />
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => startTimeRef.current?.showPicker()}
+                  >
+                    <input
+                      ref={startTimeRef}
+                      type="datetime-local"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-white/70 mb-1">End Time</label>
-                  <input
-                    type="datetime-local"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth"
-                  />
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => endTimeRef.current?.showPicker()}
+                  >
+                    <input
+                      ref={endTimeRef}
+                      type="datetime-local"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-smooth cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
 

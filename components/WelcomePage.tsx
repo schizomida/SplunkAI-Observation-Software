@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import SplunkHealthBadge from './SplunkHealthBadge';
+import WizardMascot from './WizardMascot';
 import { playStartSound, playClickSound } from '@/lib/sounds';
 
 interface WelcomePageProps {
@@ -47,7 +48,7 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
         {/* Logo / Title */}
         <div className="mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 mb-6 animate-glow">
-            <span className="text-4xl">🔮</span>
+            <WizardMascot reaction="idle" size="lg" />
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-4">
             SignalSage

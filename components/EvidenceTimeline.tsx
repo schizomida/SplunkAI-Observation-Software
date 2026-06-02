@@ -6,8 +6,10 @@ import type { EvidenceItem, InvestigationQuery } from '@/lib/types';
 interface EvidenceTimelineProps {
   evidence: EvidenceItem[];
   queries?: InvestigationQuery[];
-  onNavigate?: (tab: string) => void;
+  onNavigate?: (tab: string, evidenceType?: string) => void;
 }
+
+type SortMode = 'newest' | 'oldest' | 'by-service' | 'by-type';
 
 const typeConfig: Record<string, { color: string; bgColor: string; icon: string; label: string; queryMatch: string }> = {
   log: { color: 'bg-blue-500', bgColor: 'bg-blue-500/20 border-blue-400/30 text-blue-300', icon: '📄', label: 'Log', queryMatch: 'error-rate-spike' },
@@ -22,12 +24,13 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
   const [showAll, setShowAll] = useState(false);
   const [filterType, setFilterType] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sortMode, setSortMode] = useState<SortMode>('newest');
+  const [searchText, setSearchText] = useState('');
 
   if (evidence.length === 0) {
     return <p className="text-white/50 text-center">No evidence collected.</p>;
   }
 
-  // Count by type
   const typeCounts: Record<string, number> = {};
   for (const item of evidence) {
     typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
@@ -35,9 +38,25 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
 
   const sources = Array.from(new Set(evidence.map((e) => e.source)));
 
-  const sorted = [...evidence]
+  let filtered = [...evidence]
     .filter((item) => !filterType || item.type === filterType)
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    .filter((item) => !searchText || item.summary.toLowerCase().includes(searchText.toLowerCase()));
+
+  // Sort based on mode
+  const sorted = filtered.sort((a, b) => {
+    switch (sortMode) {
+      case 'newest':
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      case 'oldest':
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      case 'by-service':
+        return a.source.localeCompare(b.source);
+      case 'by-type':
+        return a.type.localeCompare(b.type);
+      default:
+        return 0;
+    }
+  });
 
   const displayed = showAll ? sorted : sorted.slice(0, INITIAL_DISPLAY_COUNT);
   const hasMore = sorted.length > INITIAL_DISPLAY_COUNT;
@@ -59,9 +78,8 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
       <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-4 py-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-sm text-blue-300 font-medium">
-            📎 {evidence.length} evidence items collected across {sources.length} sources
+            📎 {evidence.length} evidence items across {sources.length} sources
           </p>
-          {/* Type badges */}
           <div className="flex gap-1.5 flex-wrap">
             <button
               onClick={() => setFilterType(null)}
@@ -89,11 +107,30 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
         </div>
       </div>
 
+      {/* Sort and Search controls */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <select
+          value={sortMode}
+          onChange={(e) => setSortMode(e.target.value as SortMode)}
+          className="px-3 py-1.5 text-xs font-medium bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="newest" className="bg-gray-900">Newest First</option>
+          <option value="oldest" className="bg-gray-900">Oldest First</option>
+          <option value="by-service" className="bg-gray-900">By Service</option>
+          <option value="by-type" className="bg-gray-900">By Type</option>
+        </select>
+        <input
+          type="text"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search evidence..."
+          className="flex-1 min-w-[150px] px-3 py-1.5 text-xs bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
       {/* Timeline */}
       <div className="relative">
-        {/* Vertical line */}
         <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-indigo-500/40 via-white/10 to-transparent" />
-
         <div className="space-y-3">
           {displayed.map((item) => {
             const config = typeConfig[item.type] || {
@@ -108,22 +145,14 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
 
             return (
               <div key={item.id} className="relative pl-10">
-                {/* Dot on timeline */}
-                <div
-                  className={`absolute left-2.5 top-3 w-3 h-3 rounded-full ${config.color} ring-2 ring-white/20 shadow-sm`}
-                />
-
+                <div className={`absolute left-2.5 top-3 w-3 h-3 rounded-full ${config.color} ring-2 ring-white/20 shadow-sm`} />
                 <div
                   onClick={() => handleItemClick(item.id)}
                   className={`border border-white/10 rounded-lg p-3 bg-white/5 backdrop-blur shadow-sm cursor-pointer transition-all hover:bg-white/10 hover:border-white/20 ${isExpanded ? 'ring-1 ring-indigo-500/50' : ''}`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm">{config.icon}</span>
-                    <span
-                      className={`px-1.5 py-0.5 text-xs font-medium rounded text-white ${config.color}`}
-                    >
-                      {item.type}
-                    </span>
+                    <span className={`px-1.5 py-0.5 text-xs font-medium rounded text-white ${config.color}`}>{item.type}</span>
                     <span className="text-xs text-white/40 ml-auto font-mono">
                       {new Date(item.timestamp).toLocaleTimeString()}
                     </span>
@@ -137,7 +166,6 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
                 {/* Expanded detail panel */}
                 {isExpanded && (
                   <div className="mt-2 border border-white/10 rounded-lg p-4 bg-white/5 backdrop-blur animate-fade-in-up">
-                    {/* Raw data */}
                     <div className="mb-3">
                       <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-2">Raw Data</p>
                       <pre className="bg-gray-900/80 text-sm p-3 rounded-lg overflow-x-auto border border-white/10">
@@ -146,8 +174,6 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
                         </code>
                       </pre>
                     </div>
-
-                    {/* Related query */}
                     {relatedQuery && (
                       <div className="mb-3">
                         <p className="text-xs font-semibold text-white/70 uppercase tracking-wide mb-2">Related Query</p>
@@ -160,18 +186,16 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
                         </div>
                       </div>
                     )}
-
-                    {/* Navigation buttons */}
                     {onNavigate && (
                       <div className="flex gap-2 pt-2 border-t border-white/10">
                         <button
-                          onClick={(e) => { e.stopPropagation(); onNavigate('rootcause'); }}
+                          onClick={(e) => { e.stopPropagation(); onNavigate('rootcause', item.type); }}
                           className="px-3 py-1.5 text-xs font-medium bg-purple-500/20 border border-purple-400/30 text-purple-300 rounded-lg hover:bg-purple-500/30 transition-colors"
                         >
                           Jump to Root Cause →
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); onNavigate('remediation'); }}
+                          onClick={(e) => { e.stopPropagation(); onNavigate('remediation', item.type); }}
                           className="px-3 py-1.5 text-xs font-medium bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded-lg hover:bg-emerald-500/30 transition-colors"
                         >
                           Jump to Remediation →
@@ -186,7 +210,6 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
         </div>
       </div>
 
-      {/* Show more/less button */}
       {hasMore && (
         <div className="text-center pt-2">
           <button

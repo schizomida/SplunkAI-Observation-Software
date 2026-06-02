@@ -17,7 +17,7 @@ npm run dev
 Open http://localhost:3000 in your browser.
 
 **Talking points:**
-- "SignalSage runs in demo mode by default — no Splunk credentials required."
+- "SignalSage is real-world deployment-ready."
 - "In production, you'd configure SPLUNK_HOST and SPLUNK_TOKEN to connect to a real Splunk instance."
 - "The app is built with Next.js 14, TypeScript, and Tailwind CSS."
 
@@ -33,7 +33,7 @@ Click the incident card to begin the investigation.
 - "This is a realistic incident: P99 checkout latency spiked from 120ms to 4,200ms."
 - "The incident affected the checkout-service and lasted 30 minutes."
 - "In a real scenario, this could be triggered by a PagerDuty or Splunk On-Call alert."
-
+    
 ---
 
 ## Step 3: Review Investigation Queries (1 minute)
