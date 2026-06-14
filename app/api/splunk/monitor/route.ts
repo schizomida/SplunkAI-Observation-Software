@@ -28,11 +28,11 @@ export async function GET() {
   try {
     // Query 1: Summary metrics for the last 5 minutes
     const metricsSpl =
-      'index=main earliest=-5m | stats count as total_events count(eval(level="ERROR")) as error_count dc(service) as active_services avg(durationMs) as avg_latency';
+      'index=main earliest=-24h | stats count as total_events count(eval(level="ERROR")) as error_count dc(service) as active_services avg(durationMs) as avg_latency';
 
     // Query 2: Recent 20 events
     const eventsSpl =
-      'index=main earliest=-5m | sort -_time | head 20 | table _time service level message sourcetype';
+      'index=main earliest=-24h | sort -_time | head 20 | table _time service level message sourcetype';
 
     // Run both queries in parallel
     const [metricsResults, eventsResults] = await Promise.all([

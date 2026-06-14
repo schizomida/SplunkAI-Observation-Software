@@ -14,7 +14,7 @@
 npm run dev
 ```
 
-Open http://localhost:3000 in your browser.
+Open http://t:3000 in your browser.
 
 **Talking points:**
 - "SignalSage is real-world deployment-ready."

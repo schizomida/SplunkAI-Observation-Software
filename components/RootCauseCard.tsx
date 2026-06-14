@@ -38,7 +38,7 @@ export default function RootCauseCard({ hypotheses, highlightedType, onNavigate 
 
   // Animate confidence bars on mount
   useEffect(() => {
-    const timer = setTimeout(() => setBarsAnimated(true), 300);
+    const timer = setTimeout(() => setBarsAnimated(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
@@ -138,7 +138,7 @@ export default function RootCauseCard({ hypotheses, highlightedType, onNavigate 
             className={`border rounded-xl p-5 bg-white/5 backdrop-blur shadow-sm transition-all duration-300 hover:translate-y-[-3px] hover:shadow-xl hover:shadow-purple-500/10 animate-fade-in-up opacity-0 ${
               isTop ? 'border-indigo-400/30 ring-1 ring-indigo-500/20' : 'border-white/10'
             } ${isHighlighted ? 'ring-2 ring-purple-400 glow-ring-animation' : ''}`}
-            style={{ animationDelay: `${index * 0.15}s`, animationFillMode: 'forwards' }}
+            style={{ animationDelay: `${index * 0.08}s`, animationFillMode: 'forwards' }}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">

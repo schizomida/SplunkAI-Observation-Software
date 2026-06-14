@@ -93,14 +93,19 @@ export default function Home() {
           setHighlightedHypothesis(hypothesisType);
           setTimeout(() => setHighlightedHypothesis(null), 3000);
         } else if (tab === 'remediation') {
-          // Highlight first step matching the hypothesis order
+          // Find the hypothesis matching this evidence type
           if (investigation) {
             const hypothesisIndex = investigation.hypotheses.findIndex(
               (h) => h.type === hypothesisType
             );
-            if (hypothesisIndex >= 0 && investigation.remediation[hypothesisIndex]) {
-              setHighlightedStep(investigation.remediation[hypothesisIndex].id);
-              setTimeout(() => setHighlightedStep(null), 3000);
+            if (hypothesisIndex >= 0) {
+              // Each hypothesis generates 3 remediation steps, so the first step for this hypothesis
+              // is at index hypothesisIndex * 3
+              const stepIndex = hypothesisIndex * 3;
+              if (investigation.remediation[stepIndex]) {
+                setHighlightedStep(investigation.remediation[stepIndex].id);
+                setTimeout(() => setHighlightedStep(null), 3000);
+              }
             }
           }
         }
