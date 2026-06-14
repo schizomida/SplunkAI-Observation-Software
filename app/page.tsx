@@ -17,9 +17,10 @@ import LoadingSkeleton from '@/components/LoadingSkeleton';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import SplunkHealthBadge from '@/components/SplunkHealthBadge';
 import WizardMascot from '@/components/WizardMascot';
-import LiveDashboard from '@/components/LiveDashboard';
-import NaturalLanguageQuery from '@/components/NaturalLanguageQuery';
+import MonitorDashboard from '@/components/MonitorDashboard';
+import NLQueryChat from '@/components/NLQueryChat';
 import CollaborationBar from '@/components/CollaborationBar';
+import AnomalyAlerts from '@/components/AnomalyAlerts';
 import {
   playClickSound,
   playSuccessSound,
@@ -29,7 +30,7 @@ import {
 } from '@/lib/sounds';
 
 type AppView = 'welcome' | 'main';
-type Tab = 'select' | 'investigation' | 'rootcause' | 'remediation' | 'report' | 'dashboard' | 'query';
+type Tab = 'select' | 'investigation' | 'rootcause' | 'remediation' | 'report' | 'monitor' | 'chat';
 
 const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
   { id: 'select', label: 'Select Incident', icon: '🎯', step: 1 },
@@ -37,8 +38,8 @@ const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
   { id: 'rootcause', label: 'Root Cause', icon: '🧠', step: 3 },
   { id: 'remediation', label: 'Remediation', icon: '🛠️', step: 4 },
   { id: 'report', label: 'Report', icon: '📋', step: 5 },
-  { id: 'dashboard', label: 'Live Monitor', icon: '📡', step: 6 },
-  { id: 'query', label: 'Ask Data', icon: '💬', step: 7 },
+  { id: 'monitor', label: 'Monitor', icon: '📡', step: 6 },
+  { id: 'chat', label: 'Ask Data', icon: '💬', step: 7 },
 ];
 
 // Map evidence type → hypothesis type for highlighting
@@ -230,6 +231,14 @@ export default function Home() {
   }
 
   function renderTabContent() {
+    // Monitor and Chat tabs are always available — skip loading/error gates
+    if (activeTab === 'monitor') {
+      return <MonitorDashboard />;
+    }
+    if (activeTab === 'chat') {
+      return <NLQueryChat />;
+    }
+
     if (loading) {
       return <LoadingSkeleton />;
     }
@@ -313,12 +322,6 @@ export default function Home() {
           </div>
         );
 
-      case 'dashboard':
-        return <LiveDashboard />;
-
-      case 'query':
-        return <NaturalLanguageQuery />;
-
       default:
         return null;
     }
@@ -358,6 +361,7 @@ export default function Home() {
           <div className="flex space-x-1 overflow-x-auto py-1">
             {TABS.map((tab, index) => {
               const isActive = activeTab === tab.id;
+              const isAlwaysAvailable = tab.id === 'monitor' || tab.id === 'chat';
               const isCompleted = incident && (
                 (tab.id === 'select') ||
                 (tab.id === 'investigation' && investigation) ||
@@ -384,9 +388,11 @@ export default function Home() {
                       ? 'bg-indigo-500 text-white glow-indigo'
                       : isCompleted
                         ? 'bg-green-500 text-white glow-green'
-                        : 'bg-white/10 text-white/50'
+                        : isAlwaysAvailable
+                          ? 'bg-purple-500/30 text-purple-300'
+                          : 'bg-white/10 text-white/50'
                   }`}>
-                    {isCompleted && !isActive ? '✓' : tab.step}
+                    {isCompleted && !isActive ? '✓' : isAlwaysAvailable ? tab.icon : tab.step}
                   </span>
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">{tab.icon}</span>
@@ -450,6 +456,9 @@ export default function Home() {
           </div>
         </ErrorBoundary>
       </div>
+
+      {/* Floating Anomaly Alerts */}
+      <AnomalyAlerts />
     </main>
   );
 }

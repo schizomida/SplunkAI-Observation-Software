@@ -5,143 +5,107 @@ import { playClickSound, playSuccessSound, playErrorSound } from '@/lib/sounds';
 
 interface ChatMessage {
   id: number;
-  role: 'user' | 'system';
+  type: 'user' | 'system';
   content: string;
   spl?: string;
   results?: Record<string, string>[];
   count?: number;
-  explanation?: string;
+  interpretation?: string;
   error?: string;
   timestamp: Date;
 }
 
-const SUGGESTED_PROMPTS = [
-  'Show me recent errors',
-  'What services are affected?',
-  'Find timeout events',
-  'Show deployment history',
-];
-
 export default function NLQueryChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(1);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
 
-  async function handleSend(text?: string) {
-    const message = (text || input).trim();
-    if (!message || loading) return;
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
 
     playClickSound();
+    const userQuery = input.trim();
     setInput('');
     setLoading(true);
 
     // Add user message
     const userMsg: ChatMessage = {
       id: nextId.current++,
-      role: 'user',
-      content: message,
+      type: 'user',
+      content: userQuery,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const res = await fetch('/api/chat/query', {
+      const res = await fetch('/api/splunk/nl-query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ query: userQuery }),
       });
       const data = await res.json();
 
-      if (data.error) {
-        playErrorSound();
-        setMessages(prev => [...prev, {
-          id: nextId.current++,
-          role: 'system',
-          content: 'Query failed',
-          error: data.error,
-          timestamp: new Date(),
-        }]);
-      } else {
+      if (data.success) {
         playSuccessSound();
-        setMessages(prev => [...prev, {
+        const systemMsg: ChatMessage = {
           id: nextId.current++,
-          role: 'system',
-          content: data.explanation || 'Query executed successfully.',
+          type: 'system',
+          content: data.interpretation || 'Query executed',
           spl: data.spl,
           results: data.results || [],
-          count: data.count ?? 0,
-          explanation: data.explanation,
+          count: data.count || 0,
+          interpretation: data.interpretation,
           timestamp: new Date(),
-        }]);
+        };
+        setMessages((prev) => [...prev, systemMsg]);
+      } else {
+        playErrorSound();
+        const errorMsg: ChatMessage = {
+          id: nextId.current++,
+          type: 'system',
+          content: 'Query failed',
+          spl: data.spl || undefined,
+          interpretation: data.interpretation || undefined,
+          error: data.error || 'Unknown error',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
       }
     } catch (err) {
       playErrorSound();
-      setMessages(prev => [...prev, {
+      const errorMsg: ChatMessage = {
         id: nextId.current++,
-        role: 'system',
-        content: 'Network error',
-        error: err instanceof Error ? err.message : 'Failed to reach server',
+        type: 'system',
+        content: 'Connection error',
+        error: err instanceof Error ? err.message : 'Network error',
         timestamp: new Date(),
-      }]);
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    handleSend();
-  }
-
-  function renderResults(msg: ChatMessage) {
-    if (!msg.results || msg.results.length === 0) {
-      return <p className="text-xs text-white/40 mt-2">No results returned.</p>;
-    }
-
-    const keys = Object.keys(msg.results[0]).filter(k => !k.startsWith('_')).slice(0, 6);
-    const displayResults = msg.results.slice(0, 8);
-
-    return (
-      <div className="mt-3 overflow-x-auto">
-        <p className="text-[10px] text-white/40 mb-1">{msg.count} result{msg.count !== 1 ? 's' : ''}</p>
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr className="border-b border-white/10">
-              {keys.map(key => (
-                <th key={key} className="text-left py-1.5 px-2 text-white/50 font-medium text-[11px]">
-                  {key}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {displayResults.map((row, i) => (
-              <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                {keys.map(key => (
-                  <td key={key} className="py-1.5 px-2 text-white/70 text-[11px] truncate max-w-[180px]">
-                    {String(row[key] ?? '—')}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {msg.results.length > 8 && (
-          <p className="text-[10px] text-white/30 mt-1 px-2">...and {msg.results.length - 8} more results</p>
-        )}
-      </div>
-    );
-  }
+  const suggestions = [
+    'Show me errors',
+    'How many events in the last hour?',
+    'Which services are affected?',
+    'Show deployments',
+    'What is the latency?',
+    'Top errors',
+  ];
 
   return (
     <div className="flex flex-col h-[650px] animate-fade-in-up">
@@ -149,90 +113,177 @@ export default function NLQueryChat() {
       <div className="flex items-center gap-3 mb-4">
         <span className="text-2xl">💬</span>
         <div>
-          <h2 className="text-lg font-bold text-white">Ask Your Data</h2>
-          <p className="text-xs text-white/50">Ask questions in plain English — get Splunk results instantly.</p>
+          <h2 className="text-lg font-bold text-white">Chat with Your Data</h2>
+          <p className="text-xs text-white/50">
+            Ask questions in plain English — SignalSage converts them to Splunk queries.
+          </p>
         </div>
       </div>
 
-      {/* Suggested Prompts */}
-      {messages.length === 0 && (
-        <div className="mb-4">
-          <p className="text-xs text-white/40 mb-2">Try asking:</p>
-          <div className="flex flex-wrap gap-2">
-            {SUGGESTED_PROMPTS.map(prompt => (
-              <button
-                key={prompt}
-                onClick={() => handleSend(prompt)}
-                className="px-3 py-1.5 text-xs bg-white/10 hover:bg-indigo-600/30 text-white/70 hover:text-white rounded-lg border border-white/10 hover:border-indigo-500/30 transition-all btn-press"
-              >
-                {prompt}
-              </button>
-            ))}
+      {/* Chat Area */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2 scroll-smooth"
+      >
+        {/* Empty state with suggestions */}
+        {messages.length === 0 && !loading && (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-center mb-6">
+              <div className="text-4xl mb-3">🔮</div>
+              <p className="text-sm text-white/60 mb-1">Ask anything about your data</p>
+              <p className="text-xs text-white/30">
+                SignalSage translates your questions into SPL and runs them against Splunk
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center max-w-md">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    setInput(s);
+                    inputRef.current?.focus();
+                    playClickSound();
+                  }}
+                  className="px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-lg border border-white/10 transition-all btn-press"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-        {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            {msg.role === 'user' ? (
-              <div className="max-w-[75%] bg-purple-600/30 border border-purple-500/30 rounded-xl rounded-br-sm px-4 py-2.5">
+        {/* Message history */}
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}
+          >
+            {msg.type === 'user' ? (
+              /* User message — right-aligned indigo bubble */
+              <div className="max-w-[75%] bg-indigo-600/30 border border-indigo-500/30 rounded-xl rounded-br-sm px-4 py-2.5">
                 <p className="text-sm text-white">{msg.content}</p>
-                <p className="text-[10px] text-white/30 mt-1">{msg.timestamp.toLocaleTimeString()}</p>
+                <p className="text-[10px] text-indigo-300/50 mt-1 text-right">
+                  {msg.timestamp.toLocaleTimeString()}
+                </p>
               </div>
             ) : (
-              <div className="max-w-[90%] bg-white/5 border border-white/10 rounded-xl rounded-bl-sm px-4 py-3 space-y-2">
-                {msg.error ? (
-                  <div className="text-xs text-red-400 flex items-center gap-1.5">
-                    <span>⚠️</span> {msg.error}
-                  </div>
-                ) : (
-                  <>
-                    {msg.explanation && (
-                      <p className="text-xs text-white/70">{msg.explanation}</p>
-                    )}
-                    {msg.spl && (
-                      <div className="mt-1">
-                        <p className="text-[10px] text-indigo-400 font-semibold mb-1">Generated SPL:</p>
-                        <code className="text-[11px] text-emerald-300 font-mono block bg-black/40 rounded-lg px-3 py-2 overflow-x-auto whitespace-pre-wrap break-all">
-                          {msg.spl}
-                        </code>
+              /* System message — left-aligned gray bubble */
+              <div className="max-w-[90%] space-y-1">
+                <div className="bg-white/5 border border-white/10 rounded-xl rounded-bl-sm px-4 py-3">
+                  {/* Interpretation */}
+                  {msg.interpretation && (
+                    <p className="text-xs text-white/70 mb-2 flex items-center gap-1.5">
+                      <span className="text-indigo-400">✦</span> {msg.interpretation}
+                    </p>
+                  )}
+
+                  {/* SPL code block */}
+                  {msg.spl && (
+                    <div className="mb-3">
+                      <p className="text-[10px] text-indigo-400 font-semibold uppercase tracking-wide mb-1">
+                        Generated SPL
+                      </p>
+                      <code className="text-xs text-emerald-300 font-mono block bg-black/40 rounded-lg px-3 py-2 overflow-x-auto whitespace-pre-wrap">
+                        {msg.spl}
+                      </code>
+                    </div>
+                  )}
+
+                  {/* Error */}
+                  {msg.error && (
+                    <div className="flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">
+                      <span>⚠️</span> {msg.error}
+                    </div>
+                  )}
+
+                  {/* Results table */}
+                  {msg.results && msg.results.length > 0 && (
+                    <div>
+                      <p className="text-[10px] text-white/40 mb-1.5">
+                        {msg.count} result{msg.count !== 1 ? 's' : ''}
+                      </p>
+                      <div className="overflow-x-auto rounded-lg border border-white/10">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="bg-white/5 border-b border-white/10">
+                              {Object.keys(msg.results[0])
+                                .filter((k) => !k.startsWith('_') || k === '_time')
+                                .slice(0, 6)
+                                .map((key) => (
+                                  <th
+                                    key={key}
+                                    className="text-left py-1.5 px-2.5 text-white/50 font-medium"
+                                  >
+                                    {key}
+                                  </th>
+                                ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {msg.results.slice(0, 10).map((row, i) => (
+                              <tr
+                                key={i}
+                                className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                              >
+                                {Object.keys(msg.results![0])
+                                  .filter((k) => !k.startsWith('_') || k === '_time')
+                                  .slice(0, 6)
+                                  .map((key) => (
+                                    <td
+                                      key={key}
+                                      className="py-1.5 px-2.5 text-white/70 truncate max-w-[180px]"
+                                    >
+                                      {String(row[key] ?? '—')}
+                                    </td>
+                                  ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {msg.results.length > 10 && (
+                          <div className="px-2.5 py-1.5 bg-white/5 text-[10px] text-white/30">
+                            ...and {msg.results.length - 10} more rows
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {renderResults(msg)}
-                  </>
-                )}
-                <p className="text-[10px] text-white/20 pt-1">{msg.timestamp.toLocaleTimeString()}</p>
+                    </div>
+                  )}
+
+                  {/* No results */}
+                  {msg.results && msg.results.length === 0 && !msg.error && (
+                    <p className="text-xs text-white/40">No results returned for this query.</p>
+                  )}
+                </div>
+                <p className="text-[10px] text-white/20 px-1">
+                  {msg.timestamp.toLocaleTimeString()}
+                </p>
               </div>
             )}
           </div>
         ))}
 
+        {/* Loading indicator */}
         {loading && (
-          <div className="flex justify-start">
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+          <div className="flex justify-start animate-fade-in-up">
+            <div className="bg-white/5 border border-white/10 rounded-xl rounded-bl-sm px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 loading-dot-1" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 loading-dot-2" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 loading-dot-3" />
-                </div>
-                <span className="text-xs text-white/50">thinking...</span>
+                <span className="animate-spin text-sm">⟳</span>
+                <span className="text-xs text-white/50">Translating & querying Splunk...</span>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 border-t border-white/10 pt-4">
+      {/* Input area */}
+      <form onSubmit={handleSubmit} className="flex gap-2 shrink-0">
         <input
           ref={inputRef}
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Ask a question about your data..."
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask about your data..."
           disabled={loading}
           className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/30 transition-all disabled:opacity-50"
         />
