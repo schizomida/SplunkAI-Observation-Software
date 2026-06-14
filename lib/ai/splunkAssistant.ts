@@ -14,6 +14,7 @@
 export interface SplunkAIConfig {
   proxyUrl: string;  // The proxy server URL for Splunk AI Assistant
   cloudToken: string; // Splunk cloud auth token
+  tenantId: string;  // Splunk cloud tenant ID
   enabled: boolean;
 }
 
@@ -25,6 +26,7 @@ export function getSplunkAIConfig(): SplunkAIConfig {
   return {
     proxyUrl: process.env.SPLUNK_AI_PROXY_URL || '',
     cloudToken: process.env.SPLUNK_AI_CLOUD_TOKEN || '',
+    tenantId: process.env.SPLUNK_AI_TENANT_ID || '',
     enabled: !!(process.env.SPLUNK_AI_PROXY_URL && process.env.SPLUNK_AI_CLOUD_TOKEN),
   };
 }
@@ -45,6 +47,7 @@ async function callSplunkAI(
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.cloudToken}`,
+        ...(config.tenantId ? { 'X-Splunk-Tenant': config.tenantId } : {}),
       },
       body: JSON.stringify(body),
     });

@@ -17,6 +17,9 @@ import LoadingSkeleton from '@/components/LoadingSkeleton';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import SplunkHealthBadge from '@/components/SplunkHealthBadge';
 import WizardMascot from '@/components/WizardMascot';
+import LiveDashboard from '@/components/LiveDashboard';
+import NaturalLanguageQuery from '@/components/NaturalLanguageQuery';
+import CollaborationBar from '@/components/CollaborationBar';
 import {
   playClickSound,
   playSuccessSound,
@@ -26,7 +29,7 @@ import {
 } from '@/lib/sounds';
 
 type AppView = 'welcome' | 'main';
-type Tab = 'select' | 'investigation' | 'rootcause' | 'remediation' | 'report';
+type Tab = 'select' | 'investigation' | 'rootcause' | 'remediation' | 'report' | 'dashboard' | 'query';
 
 const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
   { id: 'select', label: 'Select Incident', icon: '🎯', step: 1 },
@@ -34,6 +37,8 @@ const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
   { id: 'rootcause', label: 'Root Cause', icon: '🧠', step: 3 },
   { id: 'remediation', label: 'Remediation', icon: '🛠️', step: 4 },
   { id: 'report', label: 'Report', icon: '📋', step: 5 },
+  { id: 'dashboard', label: 'Live Monitor', icon: '📡', step: 6 },
+  { id: 'query', label: 'Ask Data', icon: '💬', step: 7 },
 ];
 
 // Map evidence type → hypothesis type for highlighting
@@ -308,6 +313,12 @@ export default function Home() {
           </div>
         );
 
+      case 'dashboard':
+        return <LiveDashboard />;
+
+      case 'query':
+        return <NaturalLanguageQuery />;
+
       default:
         return null;
     }
@@ -427,6 +438,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Collaboration Bar — shown when investigation is active */}
+      {incident && !loading && !error && <CollaborationBar />}
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
