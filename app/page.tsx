@@ -33,13 +33,13 @@ type AppView = 'welcome' | 'main';
 type Tab = 'select' | 'investigation' | 'rootcause' | 'remediation' | 'report' | 'monitor' | 'chat';
 
 const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
-  { id: 'select', label: 'Select Incident', icon: '🎯', step: 1 },
-  { id: 'investigation', label: 'Investigation', icon: '🔍', step: 2 },
-  { id: 'rootcause', label: 'Root Cause', icon: '🧠', step: 3 },
-  { id: 'remediation', label: 'Remediation', icon: '🛠️', step: 4 },
-  { id: 'report', label: 'Report', icon: '📋', step: 5 },
-  { id: 'monitor', label: 'Monitor', icon: '📡', step: 6 },
-  { id: 'chat', label: 'Ask Data', icon: '💬', step: 7 },
+  { id: 'select', label: 'Select Incident', icon: '1', step: 1 },
+  { id: 'investigation', label: 'Investigation', icon: '2', step: 2 },
+  { id: 'rootcause', label: 'Root Cause', icon: '3', step: 3 },
+  { id: 'remediation', label: 'Remediation', icon: '4', step: 4 },
+  { id: 'report', label: 'Report', icon: '5', step: 5 },
+  { id: 'monitor', label: 'Monitor', icon: '6', step: 6 },
+  { id: 'chat', label: 'Ask Data', icon: '7', step: 7 },
 ];
 
 // Map evidence type → hypothesis type for highlighting
@@ -220,7 +220,6 @@ export default function Home() {
     return (
       <div className="ai-summary-card mb-6 animate-fade-in-up">
         <div className="flex items-start gap-2">
-          <span className="text-lg">✨</span>
           <div>
             <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wide mb-1">AI Summary</p>
             <p className="text-sm text-white/80 leading-relaxed">{summary}</p>
@@ -247,7 +246,7 @@ export default function Home() {
       return (
         <div className="flex flex-col items-center justify-center p-8 border border-red-500/30 rounded-xl bg-red-500/10 backdrop-blur animate-scale-in">
           <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
-            <span className="text-xl">⚠️</span>
+            <span className="w-3 h-3 rounded-full bg-red-500"></span>
           </div>
           <p className="text-red-300 font-semibold mb-2 text-lg">Investigation Failed</p>
           <p className="text-sm text-red-400/80 mb-1 text-center max-w-md">{error}</p>
@@ -258,7 +257,7 @@ export default function Home() {
             onClick={handleRetry}
             className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded-lg transition-colors shadow-sm btn-press"
           >
-            🔄 Retry Investigation
+            Retry Investigation
           </button>
         </div>
       );
@@ -277,7 +276,6 @@ export default function Home() {
             {renderAiSummary(aiSummaries.investigation)}
             <section>
               <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500/20 text-blue-300 text-sm">📎</span>
                 Evidence Timeline ({investigation.evidence.length} items)
               </h2>
               <EvidenceTimeline
@@ -392,10 +390,10 @@ export default function Home() {
                           ? 'bg-purple-500/30 text-purple-300'
                           : 'bg-white/10 text-white/50'
                   }`}>
-                    {isCompleted && !isActive ? '✓' : isAlwaysAvailable ? tab.icon : tab.step}
+                    {isCompleted && !isActive ? '✓' : tab.step}
                   </span>
                   <span className="hidden sm:inline">{tab.label}</span>
-                  <span className="sm:hidden">{tab.icon}</span>
+                  <span className="sm:hidden">{tab.step}</span>
                   {index < TABS.length - 1 && (
                     <span className="text-white/20 ml-1 hidden lg:inline animate-breathe">→</span>
                   )}

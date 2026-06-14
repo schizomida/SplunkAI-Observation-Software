@@ -21,10 +21,10 @@ interface MetricCard {
 
 export default function LiveDashboard() {
   const [metrics, setMetrics] = useState<MetricCard[]>([
-    { label: 'Error Rate', value: '—', icon: '🔴', trend: 'stable', status: 'good' },
-    { label: 'Avg Latency', value: '—', icon: '⏱️', trend: 'stable', status: 'good' },
-    { label: 'Active Services', value: '—', icon: '🌐', trend: 'stable', status: 'good' },
-    { label: 'Event Velocity', value: '—', icon: '⚡', trend: 'stable', status: 'good' },
+    { label: 'Error Rate', value: '—', icon: 'err', trend: 'stable', status: 'good' },
+    { label: 'Avg Latency', value: '—', icon: 'lat', trend: 'stable', status: 'good' },
+    { label: 'Active Services', value: '—', icon: 'svc', trend: 'stable', status: 'good' },
+    { label: 'Event Velocity', value: '—', icon: 'vel', trend: 'stable', status: 'good' },
   ]);
   const [history, setHistory] = useState<MetricData[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -85,28 +85,28 @@ export default function LiveDashboard() {
           {
             label: 'Error Rate',
             value: `${current.errors}`,
-            icon: '🔴',
+            icon: 'err',
             trend: getTrend(current.errors, prev?.errors),
             status: getErrorStatus(current.errors),
           },
           {
             label: 'Avg Latency',
             value: current.avgLatency > 0 ? `${current.avgLatency.toFixed(1)}ms` : '0ms',
-            icon: '⏱️',
+            icon: 'lat',
             trend: getTrend(current.avgLatency, prev?.avgLatency),
             status: getLatencyStatus(current.avgLatency),
           },
           {
             label: 'Active Services',
             value: `${current.activeServices}`,
-            icon: '🌐',
+            icon: 'svc',
             trend: getTrend(current.activeServices, prev?.activeServices),
             status: 'good',
           },
           {
             label: 'Event Velocity',
             value: `${current.eventsPerMin.toFixed(0)}/min`,
-            icon: '⚡',
+            icon: 'vel',
             trend: getTrend(current.eventsPerMin, prev?.eventsPerMin),
             status: 'good',
           },
@@ -209,7 +209,6 @@ export default function LiveDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">📊</span>
           <div>
             <h2 className="text-lg font-bold text-white">Real-Time Incident Monitor</h2>
             <p className="text-xs text-white/50">Auto-refreshes every 10 seconds</p>
@@ -237,7 +236,7 @@ export default function LiveDashboard() {
             disabled={loading}
             className="px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors btn-press disabled:opacity-50"
           >
-            {loading ? '⟳ ...' : '🔄 Refresh'}
+            {loading ? '...' : 'Refresh'}
           </button>
         </div>
       </div>
@@ -255,7 +254,7 @@ export default function LiveDashboard() {
                 <div className="absolute inset-0 bg-white/5 animate-pulse pointer-events-none" />
               )}
               <div className="flex items-start justify-between">
-                <span className="text-2xl">{metric.icon}</span>
+                <span className={`w-3 h-3 rounded-full ${i === 0 ? 'bg-red-500' : i === 1 ? 'bg-yellow-500' : i === 2 ? 'bg-emerald-500' : 'bg-blue-500'}`}></span>
                 <span className={`text-sm font-bold ${trendColor(metric.trend, isErrorMetric)}`}>
                   {trendIcon(metric.trend)}
                 </span>
@@ -272,7 +271,6 @@ export default function LiveDashboard() {
       {/* Time-Series Bar Chart */}
       <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-5">
         <h3 className="text-sm font-semibold text-white/80 mb-4 flex items-center gap-2">
-          <span className="text-base">📈</span>
           Event Velocity Over Time
           <span className="text-[10px] text-white/30 ml-auto">(events/min — last {history.length} samples)</span>
         </h3>

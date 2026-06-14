@@ -10,9 +10,9 @@ interface WelcomePageProps {
 }
 
 const FEATURES = [
-  { icon: '🔍', label: '12 Investigation Queries', delay: 'stagger-1' },
-  { icon: '🧠', label: '10 ML Analyses', delay: 'stagger-2' },
-  { icon: '⚡', label: '7 Root Cause Scorers', delay: 'stagger-3' },
+  { icon: null, label: '12 Investigation Queries', delay: 'stagger-1', dotColor: 'bg-blue-400' },
+  { icon: null, label: '10 ML Analyses', delay: 'stagger-2', dotColor: 'bg-purple-400' },
+  { icon: null, label: '7 Root Cause Scorers', delay: 'stagger-3', dotColor: 'bg-emerald-400' },
 ];
 
 export default function WelcomePage({ onStart }: WelcomePageProps) {
@@ -72,7 +72,7 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
               key={feature.label}
               className={`glass-card rounded-xl px-4 py-3 flex items-center gap-2 ${feature.delay}`}
             >
-              <span className="text-lg">{feature.icon}</span>
+              <span className={`w-2.5 h-2.5 rounded-full ${feature.dotColor}`}></span>
               <span className="text-sm font-medium text-white/90">{feature.label}</span>
             </div>
           ))}
@@ -84,7 +84,6 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
             onClick={handleStart}
             className="group relative inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300 btn-press glow-indigo"
           >
-            <span className="text-xl group-hover:scale-110 transition-transform">🚀</span>
             <span>Start Investigation</span>
             <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />

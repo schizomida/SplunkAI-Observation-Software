@@ -108,7 +108,7 @@ export default function CollaborationBar() {
             </>
           ) : (
             <>
-              <span>🔗</span> Share
+              Share
             </>
           )}
         </button>

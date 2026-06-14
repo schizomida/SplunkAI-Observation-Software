@@ -136,7 +136,7 @@ export default function AnomalyAlerts() {
           )}
           {/* Icon */}
           <span className="text-white text-lg relative z-10">
-            {alertLevel === 'critical' ? '🚨' : alertLevel === 'warning' ? '⚠️' : '✓'}
+            {alertLevel === 'critical' ? '!' : alertLevel === 'warning' ? '!' : '✓'}
           </span>
           {/* Count badge */}
           {(data?.anomalies.length || 0) + (data?.errorSpikes.length || 0) > 0 && (
@@ -161,7 +161,7 @@ export default function AnomalyAlerts() {
         <div className="flex items-center gap-2">
           <span className={`w-2.5 h-2.5 rounded-full ${getBadgeColor()} ${alertLevel === 'normal' ? 'animate-pulse' : ''}`} />
           <h3 className="text-sm font-bold text-white">Anomaly Monitor</h3>
-          {loading && <span className="animate-spin text-xs text-white/40">⟳</span>}
+          {loading && <span className="w-3 h-3 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></span>}
         </div>
         <button
           onClick={() => setExpanded(false)}
@@ -181,7 +181,7 @@ export default function AnomalyAlerts() {
               ? 'bg-yellow-500/15 text-yellow-300 border border-yellow-500/30'
               : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
         }`}>
-          <span>{alertLevel === 'critical' ? '🚨' : alertLevel === 'warning' ? '⚠️' : '✅'}</span>
+          <span className={`w-2 h-2 rounded-full ${alertLevel === 'critical' ? 'bg-red-500' : alertLevel === 'warning' ? 'bg-yellow-500' : 'bg-emerald-500'}`}></span>
           <span>
             {alertLevel === 'critical'
               ? 'Critical anomalies detected'
@@ -240,7 +240,6 @@ export default function AnomalyAlerts() {
         {/* Empty state */}
         {data && data.anomalies.length === 0 && data.errorSpikes.length === 0 && !data.error && (
           <div className="text-center py-4">
-            <span className="text-2xl">🧘</span>
             <p className="text-xs text-white/40 mt-2">No anomalies in the last 5 minutes</p>
           </div>
         )}

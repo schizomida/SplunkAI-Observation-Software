@@ -111,7 +111,6 @@ export default function NLQueryChat() {
     <div className="flex flex-col h-[650px] animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-2xl">💬</span>
         <div>
           <h2 className="text-lg font-bold text-white">Chat with Your Data</h2>
           <p className="text-xs text-white/50">
@@ -129,7 +128,6 @@ export default function NLQueryChat() {
         {messages.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-center mb-6">
-              <div className="text-4xl mb-3">🔮</div>
               <p className="text-sm text-white/60 mb-1">Ask anything about your data</p>
               <p className="text-xs text-white/30">
                 SignalSage translates your questions into SPL and runs them against Splunk
@@ -174,7 +172,7 @@ export default function NLQueryChat() {
                   {/* Interpretation */}
                   {msg.interpretation && (
                     <p className="text-xs text-white/70 mb-2 flex items-center gap-1.5">
-                      <span className="text-indigo-400">✦</span> {msg.interpretation}
+                      <span className="text-indigo-400">•</span> {msg.interpretation}
                     </p>
                   )}
 
@@ -193,7 +191,7 @@ export default function NLQueryChat() {
                   {/* Error */}
                   {msg.error && (
                     <div className="flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">
-                      <span>⚠️</span> {msg.error}
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span> {msg.error}
                     </div>
                   )}
 
@@ -268,7 +266,7 @@ export default function NLQueryChat() {
           <div className="flex justify-start animate-fade-in-up">
             <div className="bg-white/5 border border-white/10 rounded-xl rounded-bl-sm px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="animate-spin text-sm">⟳</span>
+                <span className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></span>
                 <span className="text-xs text-white/50">Translating & querying Splunk...</span>
               </div>
             </div>
@@ -292,7 +290,7 @@ export default function NLQueryChat() {
           disabled={!input.trim() || loading}
           className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800/50 text-white text-sm font-medium rounded-xl transition-colors btn-press disabled:opacity-50"
         >
-          {loading ? '⟳' : '→'}
+          {loading ? '...' : '→'}
         </button>
       </form>
     </div>

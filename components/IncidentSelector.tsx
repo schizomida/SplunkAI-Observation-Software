@@ -256,7 +256,6 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
             onClick={handleQuickLive}
             className="w-full py-4 px-4 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:translate-y-[-2px] flex items-center justify-center gap-2 btn-press ring-1 ring-emerald-400/20"
           >
-            <span>🔍</span>
             <span>Investigate Last 30 Days</span>
           </button>
           <p className="text-xs text-emerald-300/50 text-center mt-2">Scans all services across all sourcetypes</p>

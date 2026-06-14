@@ -63,7 +63,6 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
       {/* Summary header */}
       <div className="flex items-center justify-between bg-indigo-500/10 border border-indigo-400/20 rounded-lg px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-indigo-300 font-medium text-sm">🔍</span>
           <p className="text-sm text-indigo-300 font-medium">{summaryText}</p>
         </div>
         <div className="flex gap-2">
@@ -128,7 +127,7 @@ export default function QueryPanel({ queries }: QueryPanelProps) {
                     className="absolute top-2 right-2 px-2 py-1 text-xs bg-white/10 hover:bg-white/20 text-white/70 rounded transition-colors"
                     title="Copy SPL"
                   >
-                    📋 Copy
+                    Copy
                   </button>
                 </div>
               </div>

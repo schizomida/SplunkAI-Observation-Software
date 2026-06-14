@@ -174,8 +174,7 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
       {/* Celebration banner */}
       {showCelebration && (
         <div className="bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-indigo-500/20 border border-purple-400/30 rounded-xl p-6 text-center animate-scale-in">
-          <p className="text-3xl mb-2">🎉</p>
-          <p className="text-xl font-bold text-white">All Steps Completed!</p>
+          <p className="text-xl font-bold text-white">Congratulations — All Steps Completed!</p>
           <p className="text-sm text-white/60 mt-1">Great work! All remediation steps have been addressed.</p>
         </div>
       )}
@@ -184,7 +183,7 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
       <div className="bg-purple-500/10 border border-purple-400/20 rounded-lg px-4 py-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-sm text-purple-300 font-medium">
-            🛠️ {steps.length} steps{approvalCount > 0 && `, ${approvalCount} require approval`}
+            {steps.length} steps{approvalCount > 0 && `, ${approvalCount} require approval`}
             {highRiskCount > 0 && `, ${highRiskCount} high-risk`}
             {' — '}estimated total time: ~{totalMinutes} min
           </p>
@@ -229,7 +228,7 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
             onClick={handleMarkAllComplete}
             className="ml-auto px-3 py-1 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors btn-press"
           >
-            ✅ Mark All Complete
+            Mark All Complete
           </button>
         )}
       </div>
@@ -289,12 +288,12 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
                     </span>
                     {step.requiresApproval && (
                       <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-purple-500/20 text-purple-300 border border-purple-400/30">
-                        ⚠️ Approval Required
+                        Approval Required
                       </span>
                     )}
                   </div>
                   <p className="text-sm text-white/60 mb-2">{step.description}</p>
-                  <p className="text-xs text-white/40">⏱ Estimated: {step.estimatedTime}</p>
+                  <p className="text-xs text-white/40">Estimated: {step.estimatedTime}</p>
                 </div>
               </div>
             </div>

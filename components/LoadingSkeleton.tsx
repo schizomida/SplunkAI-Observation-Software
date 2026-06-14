@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 
 const LOADING_STEPS = [
-  { message: 'Registering incident', icon: '📋' },
-  { message: 'Running SPL queries against Splunk', icon: '🔍' },
-  { message: 'Analyzing evidence patterns', icon: '🧩' },
-  { message: 'Generating root cause hypotheses', icon: '🧠' },
-  { message: 'Building remediation plan', icon: '🛠️' },
+  { message: 'Registering incident' },
+  { message: 'Running SPL queries against Splunk' },
+  { message: 'Analyzing evidence patterns' },
+  { message: 'Generating root cause hypotheses' },
+  { message: 'Building remediation plan' },
 ];
 
 export default function LoadingSkeleton() {
@@ -28,7 +28,7 @@ export default function LoadingSkeleton() {
           <div className="w-16 h-16 rounded-full border-4 border-white/10" />
           <div className="absolute inset-0 w-16 h-16 rounded-full border-4 border-transparent border-t-indigo-400 animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg">{LOADING_STEPS[currentStep].icon}</span>
+            <span className="text-lg font-bold text-indigo-300">{currentStep + 1}</span>
           </div>
         </div>
       </div>
@@ -83,7 +83,6 @@ export default function LoadingSkeleton() {
             >
               {step.message}
             </span>
-            <span className="ml-auto text-sm">{step.icon}</span>
           </div>
         ))}
       </div>

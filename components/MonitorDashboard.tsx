@@ -168,12 +168,11 @@ export default function MonitorDashboard() {
       <div className="space-y-6 animate-fade-in-up">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">📡</span>
-            <div>
-              <h2 className="text-lg font-bold text-white">Real-Time Monitor</h2>
-              <p className="text-xs text-white/50">Loading live metrics...</p>
-            </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">Real-Time Monitor</h2>
+            <p className="text-xs text-white/50">Loading live metrics...</p>
           </div>
+        </div>
         </div>
         {/* Shimmer cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -196,7 +195,6 @@ export default function MonitorDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">📡</span>
           <div>
             <h2 className="text-lg font-bold text-white">Real-Time Monitor</h2>
             <p className="text-xs text-white/50">
@@ -225,7 +223,7 @@ export default function MonitorDashboard() {
       {/* Error state */}
       {error && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-red-500/30 bg-red-500/10">
-          <span>⚠️</span>
+          <span className="w-2 h-2 rounded-full bg-red-500"></span>
           <p className="text-sm text-red-300">{error}</p>
           <button
             onClick={() => { setError(null); fetchMonitorData(); }}
@@ -243,7 +241,8 @@ export default function MonitorDashboard() {
             title="Total Events"
             value={data.metrics.totalEvents.toLocaleString()}
             subtitle="Last 5 minutes"
-            icon="📊"
+            icon="events"
+            iconColor="bg-blue-500"
             trend={trends.totalEvents}
             trendArrow={trendArrow(trends.totalEvents)}
             pulse={pulsing.includes('totalEvents')}
@@ -252,7 +251,8 @@ export default function MonitorDashboard() {
             title="Error Count"
             value={data.metrics.errorCount.toLocaleString()}
             subtitle="Last 5 minutes"
-            icon="🚨"
+            icon="errors"
+            iconColor="bg-red-500"
             trend={trends.errorCount}
             trendArrow={trendArrow(trends.errorCount)}
             pulse={pulsing.includes('errorCount')}
@@ -262,7 +262,8 @@ export default function MonitorDashboard() {
             title="Active Services"
             value={data.metrics.activeServices.toLocaleString()}
             subtitle="Distinct services"
-            icon="🔧"
+            icon="services"
+            iconColor="bg-emerald-500"
             trend={trends.activeServices}
             trendArrow={trendArrow(trends.activeServices)}
             pulse={pulsing.includes('activeServices')}
@@ -271,7 +272,8 @@ export default function MonitorDashboard() {
             title="Avg Latency"
             value={data.metrics.avgLatency > 0 ? `${data.metrics.avgLatency.toFixed(1)}ms` : '—'}
             subtitle="Mean duration"
-            icon="⚡"
+            icon="latency"
+            iconColor="bg-yellow-500"
             trend={trends.avgLatency}
             trendArrow={trendArrow(trends.avgLatency)}
             pulse={pulsing.includes('avgLatency')}
@@ -283,7 +285,6 @@ export default function MonitorDashboard() {
       <div className="glass-card rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-sm">📜</span>
             <h3 className="text-sm font-semibold text-white">Live Event Feed</h3>
             <span className="text-xs text-white/40">
               ({data?.recentEvents?.length ?? 0} events)
@@ -343,17 +344,18 @@ interface MetricCardProps {
   value: string;
   subtitle: string;
   icon: string;
+  iconColor: string;
   trend: 'up' | 'down' | 'same';
   trendArrow: React.ReactNode;
   pulse: boolean;
   alert?: boolean;
 }
 
-function MetricCard({ title, value, subtitle, icon, trendArrow, pulse, alert }: MetricCardProps) {
+function MetricCard({ title, value, subtitle, iconColor, trendArrow, pulse, alert }: MetricCardProps) {
   return (
     <div className={`glass-card rounded-xl p-5 transition-all duration-300 ${alert ? 'border-red-400/40' : ''}`}>
       <div className="flex items-start justify-between mb-3">
-        <span className="text-lg">{icon}</span>
+        <span className={`w-3 h-3 rounded-full ${iconColor}`}></span>
         <div className="text-sm">{trendArrow}</div>
       </div>
       <div className={`text-2xl font-bold text-white mb-1 transition-transform duration-300 ${pulse ? 'scale-110' : 'scale-100'}`}>

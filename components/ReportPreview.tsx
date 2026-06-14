@@ -48,7 +48,7 @@ export default function ReportPreview({ report }: ReportPreviewProps) {
     <div className="max-w-3xl mx-auto">
       {/* Header with actions */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-white">📋 Incident Report</h3>
+        <h3 className="text-lg font-bold text-white">Incident Report</h3>
         <div className="flex gap-2">
           <button
             onClick={handleCopy}
@@ -58,24 +58,24 @@ export default function ReportPreview({ report }: ReportPreviewProps) {
                 : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10 hover:shadow-lg hover:shadow-indigo-500/20'
             }`}
           >
-            {copied ? '✓ Copied' : '📋 Copy to Clipboard'}
+            {copied ? '✓ Copied' : 'Copy to Clipboard'}
           </button>
           <button
             onClick={handleDownload}
             className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-lg hover:shadow-indigo-500/30"
           >
-            ⬇️ Download .md
+            Download .md
           </button>
         </div>
       </div>
 
       {/* Report metadata */}
       <div className="flex items-center gap-4 mb-4 text-xs text-white/50 bg-white/5 rounded-lg px-4 py-2 border border-white/10">
-        <span>📅 Generated: {new Date(report.generatedAt).toLocaleString()}</span>
+        <span>Generated: {new Date(report.generatedAt).toLocaleString()}</span>
         <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>🆔 Incident: {report.incidentId}</span>
+        <span>Incident: {report.incidentId}</span>
         <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>📑 {report.sections.length} sections</span>
+        <span>{report.sections.length} sections</span>
       </div>
 
       {/* Section toggles */}

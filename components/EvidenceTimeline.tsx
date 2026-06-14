@@ -12,10 +12,10 @@ interface EvidenceTimelineProps {
 type SortMode = 'newest' | 'oldest' | 'by-service' | 'by-type';
 
 const typeConfig: Record<string, { color: string; bgColor: string; icon: string; label: string; queryMatch: string }> = {
-  log: { color: 'bg-blue-500', bgColor: 'bg-blue-500/20 border-blue-400/30 text-blue-300', icon: '📄', label: 'Log', queryMatch: 'error-rate-spike' },
-  metric: { color: 'bg-green-500', bgColor: 'bg-green-500/20 border-green-400/30 text-green-300', icon: '📊', label: 'Metric', queryMatch: 'anomaly-detection' },
-  trace: { color: 'bg-purple-500', bgColor: 'bg-purple-500/20 border-purple-400/30 text-purple-300', icon: '🔗', label: 'Trace', queryMatch: 'latency-percentiles' },
-  deployment: { color: 'bg-orange-500', bgColor: 'bg-orange-500/20 border-orange-400/30 text-orange-300', icon: '🚀', label: 'Deploy', queryMatch: 'deployment-correlation' },
+  log: { color: 'bg-blue-500', bgColor: 'bg-blue-500/20 border-blue-400/30 text-blue-300', icon: 'LOG', label: 'Log', queryMatch: 'error-rate-spike' },
+  metric: { color: 'bg-green-500', bgColor: 'bg-green-500/20 border-green-400/30 text-green-300', icon: 'MET', label: 'Metric', queryMatch: 'anomaly-detection' },
+  trace: { color: 'bg-purple-500', bgColor: 'bg-purple-500/20 border-purple-400/30 text-purple-300', icon: 'TRC', label: 'Trace', queryMatch: 'latency-percentiles' },
+  deployment: { color: 'bg-orange-500', bgColor: 'bg-orange-500/20 border-orange-400/30 text-orange-300', icon: 'DEP', label: 'Deploy', queryMatch: 'deployment-correlation' },
 };
 
 const INITIAL_DISPLAY_COUNT = 10;
@@ -103,7 +103,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
       <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-4 py-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-sm text-blue-300 font-medium">
-            📎 {evidence.length} evidence items across {sources.length} sources
+            {evidence.length} evidence items across {sources.length} sources
           </p>
           <div className="flex gap-1.5 flex-wrap">
             <button
@@ -115,7 +115,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
               All ({evidence.length})
             </button>
             {Object.entries(typeCounts).map(([type, count]) => {
-              const config = typeConfig[type] || { bgColor: 'bg-white/10 border-white/20 text-white/70', icon: '❓', label: type, queryMatch: '' };
+              const config = typeConfig[type] || { bgColor: 'bg-white/10 border-white/20 text-white/70', icon: '?', label: type, queryMatch: '' };
               return (
                 <button
                   key={type}
@@ -124,7 +124,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
                     filterType === type ? 'bg-white/20 text-white border-white/30' : `${config.bgColor}`
                   }`}
                 >
-                  {config.icon} {config.label} ({count})
+                  {config.label} ({count})
                 </button>
               );
             })}
@@ -196,7 +196,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
             const config = typeConfig[item.type] || {
               color: 'bg-gray-500',
               bgColor: 'bg-white/10 border-white/20 text-white/70',
-              icon: '❓',
+              icon: '?',
               label: item.type,
               queryMatch: '',
             };
@@ -212,7 +212,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
                   className={`border border-white/10 rounded-lg p-3 bg-white/5 backdrop-blur shadow-sm cursor-pointer transition-all hover:bg-white/10 hover:border-white/20 hover:translate-x-1 ${isExpanded ? 'ring-1 ring-indigo-500/50' : ''}`}
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm">{config.icon}</span>
+                    <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${config.color} text-white`}>{config.icon}</span>
                     <span className={`px-1.5 py-0.5 text-xs font-medium rounded text-white ${config.color}`}>{item.type}</span>
                     <span className="text-xs text-white/40 ml-auto font-mono">
                       {new Date(item.timestamp).toLocaleTimeString()}

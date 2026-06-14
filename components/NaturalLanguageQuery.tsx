@@ -138,7 +138,6 @@ export default function NaturalLanguageQuery() {
     <div className="flex flex-col h-[600px] animate-fade-in-up">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-2xl">💬</span>
         <div>
           <h2 className="text-lg font-bold text-white">Ask Your Data</h2>
           <p className="text-xs text-white/50">Natural language → Splunk queries. No SPL knowledge required.</p>
@@ -185,7 +184,7 @@ export default function NaturalLanguageQuery() {
 
                   {item.error ? (
                     <div className="mt-2 text-xs text-red-400 flex items-center gap-1">
-                      <span>⚠️</span> {item.error}
+                      <span className="w-2 h-2 rounded-full bg-red-500"></span> {item.error}
                     </div>
                   ) : item.results.length > 0 ? (
                     <div className="mt-3">
@@ -232,7 +231,7 @@ export default function NaturalLanguageQuery() {
           <div className="flex justify-start">
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="animate-spin text-sm">⟳</span>
+                <span className="w-3 h-3 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></span>
                 <span className="text-xs text-white/50">Querying Splunk...</span>
               </div>
             </div>
@@ -256,7 +255,7 @@ export default function NaturalLanguageQuery() {
           disabled={!input.trim() || loading}
           className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800/50 text-white text-sm font-medium rounded-xl transition-colors btn-press disabled:opacity-50"
         >
-          {loading ? '⟳' : '→'}
+          {loading ? '...' : '→'}
         </button>
       </form>
     </div>

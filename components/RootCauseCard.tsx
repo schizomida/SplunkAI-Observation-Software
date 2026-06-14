@@ -83,7 +83,7 @@ export default function RootCauseCard({ hypotheses, highlightedType, onNavigate 
       {/* Summary */}
       <div className="bg-amber-500/10 border border-amber-400/20 rounded-lg px-4 py-3">
         <p className="text-sm text-amber-300 font-medium">
-          🧠 Top hypothesis: <span className="font-bold">{topHypothesis.type}</span> with{' '}
+          Top hypothesis: <span className="font-bold">{topHypothesis.type}</span> with{' '}
           <span className="font-bold">{topConfidence}%</span> confidence
           {hypotheses.length > 1 && ` — ${hypotheses.length - 1} alternative ${hypotheses.length - 1 === 1 ? 'hypothesis' : 'hypotheses'} also considered`}
         </p>
@@ -166,7 +166,7 @@ export default function RootCauseCard({ hypotheses, highlightedType, onNavigate 
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-white/50 mb-3">
-              <span className="flex items-center gap-1">📎 {hypothesis.supportingEvidence.length} supporting evidence</span>
+              <span className="flex items-center gap-1">{hypothesis.supportingEvidence.length} supporting evidence</span>
             </div>
             {hypothesis.recommendedActions.length > 0 && (
               <div className="bg-white/5 rounded-lg p-3 border border-white/10">
