@@ -246,6 +246,65 @@ export async function runQuery(
     );
   }
 
-  const sid = await createSearchJob(spl, resolvedConfig);
-  return pollSearchResults(sid, resolvedConfig);
+  // Try oneshot mode first (faster for simple queries)
+  try {
+    return await runOneshotQuery(spl, resolvedConfig);
+  } catch {
+    // Fall back to async job if oneshot fails
+    const sid = await createSearchJob(spl, resolvedConfig);
+    return pollSearchResults(sid, resolvedConfig);
+  }
+}
+
+/**
+ * Runs a query in oneshot (synchronous) mode.
+ * This is faster for simple queries as it avoids the create-poll cycle.
+ */
+async function runOneshotQuery(
+  spl: string,
+  config: SplunkConfig
+): Promise<unknown[]> {
+  const url = `${baseUrl(config)}/services/search/jobs/export`;
+
+  const body = new URLSearchParams({
+    search: spl.startsWith('search ') ? spl : `search ${spl}`,
+    output_mode: 'json',
+    exec_mode: 'oneshot',
+  });
+
+  const response = await splunkFetch(url, {
+    method: 'POST',
+    headers: {
+      ...authHeaders(config),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Oneshot query failed: ${response.status}`);
+  }
+
+  const text = await response.text();
+  if (!text.trim()) return [];
+
+  // The export endpoint returns newline-delimited JSON
+  const results: unknown[] = [];
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const obj = JSON.parse(trimmed);
+      // Export endpoint wraps results in { result: {...} } or { results: [...] }
+      if (obj.result) {
+        results.push(obj.result);
+      } else if (obj.results && Array.isArray(obj.results)) {
+        results.push(...obj.results);
+      }
+    } catch {
+      // Skip unparseable lines
+    }
+  }
+
+  return results;
 }

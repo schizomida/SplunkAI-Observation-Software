@@ -40,36 +40,47 @@ const SOURCETYPE_OPTIONS = [
   'custom',
 ];
 
-const TIME_RANGE_LABELS: Array<{ days: number; label: string }> = [
-  { days: 1, label: '1 Day' },
-  { days: 2, label: '2 Days' },
-  { days: 3, label: '3 Days' },
-  { days: 7, label: '1 Week' },
-  { days: 14, label: '2 Weeks' },
-  { days: 30, label: '1 Month' },
-  { days: 60, label: '2 Months' },
-  { days: 90, label: 'A Quarter' },
-  { days: 180, label: 'Half a Year' },
-  { days: 270, label: '9 Months' },
-  { days: 365, label: '1 Year' },
+/**
+ * Time presets: each has a day value and slider position (0-100).
+ * Slider maps linearly between these stops.
+ */
+const TIME_PRESETS = [
+  { days: 1, label: '1d', position: 0 },
+  { days: 7, label: '1w', position: 20 },
+  { days: 30, label: '1m', position: 40 },
+  { days: 90, label: '3m', position: 60 },
+  { days: 180, label: '6m', position: 80 },
+  { days: 365, label: '1y', position: 100 },
 ];
 
 /**
- * Maps a slider value (0-100) to days (1-365) using exponential scale
- * for smoother feel at lower ranges.
+ * Maps slider value (0-100) to days using linear interpolation between presets.
  */
 function sliderToDays(sliderValue: number): number {
-  // Exponential mapping: 0→1 day, 100→365 days
-  const minDays = 1;
-  const maxDays = 365;
-  const days = Math.round(minDays * Math.pow(maxDays / minDays, sliderValue / 100));
-  return Math.max(1, Math.min(365, days));
+  const clamped = Math.max(0, Math.min(100, sliderValue));
+  // Find which two presets we're between
+  for (let i = 0; i < TIME_PRESETS.length - 1; i++) {
+    const curr = TIME_PRESETS[i];
+    const next = TIME_PRESETS[i + 1];
+    if (clamped >= curr.position && clamped <= next.position) {
+      const ratio = (clamped - curr.position) / (next.position - curr.position);
+      return Math.round(curr.days + ratio * (next.days - curr.days));
+    }
+  }
+  return 365;
 }
 
 function daysToSlider(days: number): number {
-  const minDays = 1;
-  const maxDays = 365;
-  return Math.round(100 * Math.log(days / minDays) / Math.log(maxDays / minDays));
+  const clamped = Math.max(1, Math.min(365, days));
+  for (let i = 0; i < TIME_PRESETS.length - 1; i++) {
+    const curr = TIME_PRESETS[i];
+    const next = TIME_PRESETS[i + 1];
+    if (clamped >= curr.days && clamped <= next.days) {
+      const ratio = (clamped - curr.days) / (next.days - curr.days);
+      return Math.round(curr.position + ratio * (next.position - curr.position));
+    }
+  }
+  return 100;
 }
 
 function formatDaysLabel(days: number): string {
@@ -79,17 +90,14 @@ function formatDaysLabel(days: number): string {
   if (days < 14) return `${days} Days`;
   if (days === 14) return '2 Weeks';
   if (days < 28) return `${Math.round(days / 7)} Weeks`;
-  if (days <= 31) return '~1 Month';
-  if (days <= 45) return '~6 Weeks';
-  if (days <= 62) return '~2 Months';
-  if (days <= 93) return '~A Quarter';
-  if (days <= 124) return '~4 Months';
-  if (days <= 155) return '~5 Months';
-  if (days <= 186) return '~Half a Year';
-  if (days <= 279) return `~${Math.round(days / 30)} Months`;
-  if (days <= 330) return '~10 Months';
-  if (days <= 350) return '~11 Months';
-  return '~1 Year';
+  if (days <= 31) return '1 Month';
+  if (days <= 60) return `${Math.round(days / 30)} Months`;
+  if (days <= 93) return '3 Months';
+  if (days <= 135) return `${Math.round(days / 30)} Months`;
+  if (days <= 186) return '6 Months';
+  if (days <= 279) return `${Math.round(days / 30)} Months`;
+  if (days <= 350) return `${Math.round(days / 30)} Months`;
+  return '1 Year';
 }
 
 interface IncidentSelectorProps {
@@ -107,7 +115,7 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [description, setDescription] = useState('');
-  const [timeSlider, setTimeSlider] = useState(50); // default ~30 days
+  const [timeSlider, setTimeSlider] = useState(40); // default = 30 days (1 month)
 
   // Refs for datetime pickers
   const startTimeRef = useRef<HTMLInputElement>(null);
@@ -343,21 +351,21 @@ export default function IncidentSelector({ onSelect }: IncidentSelectorProps) {
                     className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-emerald-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-400 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-emerald-500/30 [&::-webkit-slider-thumb]:cursor-pointer"
                   />
                   <div className="flex justify-between mt-1">
-                    {[1, 7, 30, 90, 180, 365].map((d) => (
+                    {TIME_PRESETS.map((preset) => (
                       <button
-                        key={d}
+                        key={preset.days}
                         type="button"
                         onClick={() => {
                           playClickSound();
-                          setTimeSlider(daysToSlider(d));
+                          setTimeSlider(preset.position);
                           const now = new Date();
-                          const start = new Date(now.getTime() - d * 24 * 60 * 60 * 1000);
+                          const start = new Date(now.getTime() - preset.days * 24 * 60 * 60 * 1000);
                           setStartTime(start.toISOString().slice(0, 16));
                           setEndTime(now.toISOString().slice(0, 16));
                         }}
                         className="text-[10px] text-white/40 hover:text-emerald-300 transition-colors"
                       >
-                        {d <= 1 ? '1d' : d <= 7 ? '1w' : d <= 30 ? '1m' : d <= 90 ? '3m' : d <= 180 ? '6m' : '1y'}
+                        {preset.label}
                       </button>
                     ))}
                   </div>

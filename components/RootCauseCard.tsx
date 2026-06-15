@@ -33,14 +33,18 @@ function getConfidenceLabel(pct: number): string {
 export default function RootCauseCard({ hypotheses, highlightedType, onNavigate }: RootCauseCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('highest-confidence');
   const [filterByType, setFilterByType] = useState<string | null>(null);
-  const [barsAnimated, setBarsAnimated] = useState(false);
+  const [barsAnimated, setBarsAnimated] = useState(!!highlightedType);
   const highlightRef = useRef<HTMLDivElement>(null);
 
-  // Animate confidence bars on mount
+  // Animate confidence bars on mount — instant when navigated via highlight
   useEffect(() => {
-    const timer = setTimeout(() => setBarsAnimated(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
+    if (highlightedType) {
+      setBarsAnimated(true);
+    } else {
+      const timer = setTimeout(() => setBarsAnimated(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedType]);
 
   // Scroll highlighted into view
   useEffect(() => {
@@ -135,10 +139,10 @@ export default function RootCauseCard({ hypotheses, highlightedType, onNavigate 
           <div
             key={hypothesis.id}
             ref={isHighlighted ? highlightRef : undefined}
-            className={`border rounded-xl p-5 bg-white/5 backdrop-blur shadow-sm transition-all duration-300 hover:translate-y-[-3px] hover:shadow-xl hover:shadow-purple-500/10 animate-fade-in-up opacity-0 ${
+            className={`border rounded-xl p-5 bg-white/5 backdrop-blur shadow-sm transition-all duration-300 hover:translate-y-[-3px] hover:shadow-xl hover:shadow-purple-500/10 ${highlightedType ? '' : 'animate-fade-in-up opacity-0'} ${
               isTop ? 'border-indigo-400/30 ring-1 ring-indigo-500/20' : 'border-white/10'
             } ${isHighlighted ? 'ring-2 ring-purple-400 glow-ring-animation' : ''}`}
-            style={{ animationDelay: `${index * 0.08}s`, animationFillMode: 'forwards' }}
+            style={highlightedType ? undefined : { animationDelay: `${index * 0.08}s`, animationFillMode: 'forwards' }}
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">

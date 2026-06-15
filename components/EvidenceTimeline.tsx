@@ -19,6 +19,7 @@ const typeConfig: Record<string, { color: string; bgColor: string; icon: string;
 };
 
 const INITIAL_DISPLAY_COUNT = 10;
+const MAX_DISPLAY_COUNT = 50;
 
 export default function EvidenceTimeline({ evidence, queries, onNavigate }: EvidenceTimelineProps) {
   const [showAll, setShowAll] = useState(false);
@@ -32,39 +33,64 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
     return <p className="text-white/50 text-center">No evidence collected.</p>;
   }
 
+  // Filter out plain logs — they're repetitive and low-value compared to metrics/traces/deployments
+  const meaningfulEvidence = evidence.filter((item) => item.type !== 'log');
+
   const typeCounts: Record<string, number> = {};
-  for (const item of evidence) {
+  for (const item of meaningfulEvidence) {
     typeCounts[item.type] = (typeCounts[item.type] || 0) + 1;
   }
 
-  // Extract severity levels from evidence data
+  // Extract severity levels from evidence data — check multiple possible locations
   const severityLevels = Array.from(
     new Set(
-      evidence
+      meaningfulEvidence
         .map((item) => {
+          // Check nested data.level
           const data = item.data as Record<string, unknown> | null;
-          if (data && typeof data === 'object' && 'level' in data && typeof data.level === 'string') {
-            return data.level.toUpperCase();
+          if (data && typeof data === 'object') {
+            if ('level' in data && typeof data.level === 'string') {
+              return data.level.toUpperCase();
+            }
+            // Check nested event.level (common in Splunk HEC ingested data)
+            const event = data.event as Record<string, unknown> | undefined;
+            if (event && typeof event === 'object' && 'level' in event && typeof event.level === 'string') {
+              return event.level.toUpperCase();
+            }
           }
+          // Parse from summary: look for [ERROR], [WARN], [INFO] patterns
+          const match = item.summary.match(/\[(ERROR|WARN|WARNING|INFO|DEBUG)\]/i);
+          if (match) return match[1].toUpperCase();
           return null;
         })
         .filter((level): level is string => level !== null)
     )
   );
 
-  const sources = Array.from(new Set(evidence.map((e) => e.source)));
+  const sources = Array.from(new Set(meaningfulEvidence.map((e) => e.source)));
 
-  let filtered = [...evidence]
+  let filtered = [...meaningfulEvidence]
     .filter((item) => !filterType || item.type === filterType)
     .filter((item) => !searchText || item.summary.toLowerCase().includes(searchText.toLowerCase()))
     .filter((item) => {
       if (!severityFilter) return true;
       const data = item.data as Record<string, unknown> | null;
-      if (data && typeof data === 'object' && 'level' in data && typeof data.level === 'string') {
-        return data.level.toUpperCase() === severityFilter;
+      if (data && typeof data === 'object') {
+        // Direct data.level
+        if ('level' in data && typeof data.level === 'string') {
+          return data.level.toUpperCase() === severityFilter;
+        }
+        // Nested event.level (HEC ingested data)
+        const event = data.event as Record<string, unknown> | undefined;
+        if (event && typeof event === 'object' && 'level' in event && typeof event.level === 'string') {
+          return event.level.toUpperCase() === severityFilter;
+        }
       }
-      // Non-log items always pass severity filter
-      return true;
+      // Parse from summary: look for [ERROR], [WARN], [INFO] patterns
+      const match = item.summary.match(/\[(ERROR|WARN|WARNING|INFO|DEBUG)\]/i);
+      if (match) return match[1].toUpperCase() === severityFilter;
+      // Non-log items without level info: show when severity is selected (don't filter them out)
+      return item.type !== 'log';
     });
 
   // Sort based on mode
@@ -83,7 +109,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
     }
   });
 
-  const displayed = showAll ? sorted : sorted.slice(0, INITIAL_DISPLAY_COUNT);
+  const displayed = showAll ? sorted.slice(0, MAX_DISPLAY_COUNT) : sorted.slice(0, INITIAL_DISPLAY_COUNT);
   const hasMore = sorted.length > INITIAL_DISPLAY_COUNT;
 
   function handleItemClick(id: string) {
@@ -103,7 +129,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
       <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-4 py-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <p className="text-sm text-blue-300 font-medium">
-            {evidence.length} evidence items across {sources.length} sources
+            {meaningfulEvidence.length} evidence items across {sources.length} sources
           </p>
           <div className="flex gap-1.5 flex-wrap">
             <button
@@ -112,7 +138,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
                 !filterType ? 'bg-white/20 text-white border-white/30' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
               }`}
             >
-              All ({evidence.length})
+              All ({meaningfulEvidence.length})
             </button>
             {Object.entries(typeCounts).map(([type, count]) => {
               const config = typeConfig[type] || { bgColor: 'bg-white/10 border-white/20 text-white/70', icon: '?', label: type, queryMatch: '' };
@@ -202,10 +228,11 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
             };
             const isExpanded = expandedId === item.id;
             const relatedQuery = getRelatedQuery(item.type);
-            const staggerClass = index < 10 ? `stagger-${index + 1}` : '';
+            // Only animate first 10 items to prevent browser freeze
+            const shouldAnimate = index < 10;
 
             return (
-              <div key={item.id} className={`relative pl-10 animate-fade-in-up opacity-0 ${staggerClass}`} style={{ animationFillMode: 'forwards' }}>
+              <div key={item.id} className={`relative pl-10 ${shouldAnimate ? 'animate-fade-in-up opacity-0' : ''}`} style={shouldAnimate ? { animationDelay: `${index * 0.05}s`, animationFillMode: 'forwards' } : undefined}>
                 <div className={`absolute left-2.5 top-3 w-3 h-3 rounded-full ${config.color} ring-2 ring-white/20 shadow-sm`} />
                 <div
                   onClick={() => handleItemClick(item.id)}
@@ -277,7 +304,7 @@ export default function EvidenceTimeline({ evidence, queries, onNavigate }: Evid
             onClick={() => setShowAll(!showAll)}
             className="px-4 py-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg border border-indigo-400/20 transition-colors"
           >
-            {showAll ? `Show less` : `Show all ${sorted.length} items`}
+            {showAll ? `Show less` : `Show more (${Math.min(sorted.length, MAX_DISPLAY_COUNT)} of ${sorted.length} items)`}
           </button>
         </div>
       )}

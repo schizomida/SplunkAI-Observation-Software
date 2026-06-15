@@ -44,11 +44,15 @@ function generateTimeline(result: InvestigationResult): string {
 
   const sorted = [...result.evidence].sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
+  ).slice(0, 30);
 
   let timeline = '';
   for (const item of sorted) {
-    timeline += `- **${item.timestamp}** [${item.type}] ${item.summary}\n`;
+    timeline += `- **${item.timestamp}** [${item.type}] ${item.summary.slice(0, 100)}\n`;
+  }
+
+  if (result.evidence.length > 30) {
+    timeline += `\n_...and ${result.evidence.length - 30} more events_\n`;
   }
 
   return timeline;
@@ -63,11 +67,19 @@ function generateEvidenceTable(result: InvestigationResult): string {
     return 'No evidence items collected.\n';
   }
 
+  // Cap at 20 rows to keep report readable
+  const items = result.evidence.slice(0, 20);
+
   let table = '| ID | Type | Timestamp | Source | Summary |\n';
   table += '| --- | --- | --- | --- | --- |\n';
 
-  for (const item of result.evidence) {
-    table += `| ${item.id} | ${item.type} | ${item.timestamp} | ${item.source} | ${item.summary} |\n`;
+  for (const item of items) {
+    const summary = item.summary.length > 80 ? item.summary.slice(0, 80) + '...' : item.summary;
+    table += `| ${item.id} | ${item.type} | ${item.timestamp} | ${item.source} | ${summary} |\n`;
+  }
+
+  if (result.evidence.length > 20) {
+    table += `\n_...and ${result.evidence.length - 20} more evidence items (see full data export)_\n`;
   }
 
   return table;

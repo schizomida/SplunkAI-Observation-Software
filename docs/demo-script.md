@@ -4,7 +4,9 @@
 
 - Node.js 18+ installed
 - Repository cloned and `npm install` completed
-- No Splunk credentials needed (demo mode is default)
+- Splunk Enterprise running locally (port 8089 for REST API, 8000 for Web UI)
+- `.env.local` configured with SPLUNK_TOKEN and ALLOW_LIVE_SPL=true
+- Data ingested via `node scripts/ingest-demo-data.js` or `node scripts/ingest-extended-data.js`
 
 ---
 
@@ -14,125 +16,168 @@
 npm run dev
 ```
 
-Open http://t:3000 in your browser.
+Open http://localhost:3000 in your browser.
 
 **Talking points:**
-- "SignalSage is real-world deployment-ready."
-- "In production, you'd configure SPLUNK_HOST and SPLUNK_TOKEN to connect to a real Splunk instance."
-- "The app is built with Next.js 14, TypeScript, and Tailwind CSS."
+- "SignalSage is an AI-powered incident copilot that connects to your live Splunk instance."
+- "It automates evidence correlation, root cause analysis, and report generation."
+- "Built with Next.js 14, TypeScript, and Tailwind CSS — production-ready."
 
 ---
 
-## Step 2: Select the Demo Incident (30 seconds)
+## Step 2: Welcome Page (15 seconds)
 
-On the main page, you'll see the **Checkout Service Latency Spike** incident card.
+You'll see the SignalSage welcome page with a connection status indicator and an animated mascot.
 
-Click the incident card to begin the investigation.
+Click the "Enter SignalSage" button. An explosion transition takes you into the main investigation interface.
 
 **Talking points:**
-- "This is a realistic incident: P99 checkout latency spiked from 120ms to 4,200ms."
-- "The incident affected the checkout-service and lasted 30 minutes."
-- "In a real scenario, this could be triggered by a PagerDuty or Splunk On-Call alert."
+- "The app verifies Splunk connectivity on load — the green badge confirms a live connection."
+- "Everything you see from here is driven by real Splunk data."
 
 ---
 
-## Step 3: Review Investigation Queries (1 minute)
+## Step 3: Configure the Investigation (45 seconds)
 
-Navigate to the **Queries** tab. You'll see 5 generated SPL investigation queries:
+On the **Select Incident** tab, you have two options:
 
-1. **Error Rate Spike** — Searches for error-level events in the affected service
-2. **Latency Percentiles** — Calculates p50/p95/p99 latency during the incident window
-3. **Deployment Correlation** — Finds deployments near the incident start time
-4. **Dependency Timeout** — Searches for timeout events in downstream services
-5. **Host/Pod Impact** — Identifies which hosts or pods were most affected
+1. **Quick Investigation** — Click "Investigate Last 30 Days" to scan all services
+2. **Custom Investigation** — Expand the form to configure service, severity, sourcetype, and time range
+
+Use the time range slider (1 day to 1 year, exponential scale) or pick exact start/end times.
 
 **Talking points:**
-- "SignalSage automatically generates targeted SPL queries from the incident context."
-- "Each query has a clear purpose and explanation — no SPL expertise required."
-- "All queries are validated against injection patterns before execution."
-- "The time window is automatically scoped to the incident duration."
+- "You can target a specific service or scan everything with the 'All Services' option."
+- "Severity filters let you focus on critical/high events or include all levels."
+- "The sourcetype filter narrows to specific data formats: logs, metrics, traces, or deployments."
 
 ---
 
-## Step 4: Explore the Evidence Timeline (1 minute)
+## Step 4: Investigation Results — Evidence Timeline (1 minute)
 
-Navigate to the **Evidence** tab. You'll see a chronological timeline showing:
+After clicking investigate, SignalSage:
+1. Generates 12+ targeted SPL queries
+2. Executes them against your Splunk instance in parallel
+3. Runs ML-powered analysis (anomaly detection, clustering, forecasting)
+4. Normalizes all results into a unified evidence timeline
 
-- **Deployment event** — payment-service v2.4.1 deployed 8 minutes before the incident
-- **Log entries** — Redis timeout errors, retry exhaustion warnings, slow query logs
-- **Metrics** — P99 latency spike, error rate increase, Redis connection pool saturation
-- **Traces** — Distributed traces showing checkout → payment → redis span slowdowns
+Navigate to the **Investigation** tab. You'll see:
+- A chronological timeline of all evidence collected
+- Each item shows type (log, metric, trace, deployment), timestamp, and severity
+- Click any item to see the underlying SPL query
+- "Jump to Root Cause" and "Jump to Remediation" buttons for navigation
 
 **Talking points:**
-- "All evidence is normalized into a single timeline regardless of source type."
-- "Each item shows its type (log, metric, trace, deployment), timestamp, and severity."
-- "Sensitive fields like tokens and passwords are automatically masked."
-- "This replaces the manual process of switching between 4-5 different dashboards."
+- "All evidence comes from live Splunk queries — no fake data."
+- "Sensitive fields like tokens and passwords are automatically masked before display."
+- "This replaces manually switching between 4-5 different Splunk dashboards."
 
 ---
 
-## Step 5: Analyze Root Cause Hypotheses (1 minute)
+## Step 5: Root Cause Analysis (1 minute)
 
 Navigate to the **Root Cause** tab. You'll see ranked hypotheses:
 
-1. **Deployment Correlation** (~70% confidence) — A deployment occurred close to incident start
-2. **Dependency Timeout** (~75% confidence) — Multiple timeout events in downstream dependencies
-3. **Resource Exhaustion** (~70% confidence) — Redis connection pool saturation detected
-4. **Error Spike** (~70% confidence) — Significant spike in error logs
+- **Deployment Correlation** — Was a deploy near the incident start?
+- **Dependency Timeout** — Are downstream services timing out?
+- **Resource Exhaustion** — Are connection pools or memory saturated?
+- **Error Spike** — Is there a systemic failure pattern?
+- **Performance Degradation** — Are traces showing latency increases?
+
+Each hypothesis shows a confidence percentage, supporting evidence, and a "Jump to Remediation" link.
 
 **Talking points:**
-- "SignalSage ranks hypotheses by confidence based on evidence scoring."
-- "Each hypothesis shows supporting evidence IDs so you can trace back to raw data."
-- "The system avoids claiming certainty — it presents probabilities, not conclusions."
-- "Multiple hypotheses can be true simultaneously (deployment caused the timeout which caused resource exhaustion)."
+- "Confidence scores are based on evidence scoring — boosted by ML anomaly detection results."
+- "Multiple hypotheses can be true simultaneously (a deploy caused a timeout which caused pool exhaustion)."
+- "The system presents probabilities, never false certainty."
 
 ---
 
-## Step 6: Review Remediation Steps (30 seconds)
+## Step 6: Remediation Steps (30 seconds)
 
 Navigate to the **Remediation** tab. You'll see an ordered checklist:
 
-- ✅ Low-risk: Verify deployment diff (5 min)
-- ⚠️ High-risk: Roll back to previous version (10 min) — REQUIRES APPROVAL
-- ✅ Low-risk: Validate rollback success (5 min)
-- ✅ Low-risk: Check dependency health (5 min)
-- ⚠️ Medium-risk: Increase timeout thresholds (10 min)
+- Steps are grouped by hypothesis and ordered by priority
+- Risk badges (low/medium/high) with estimated completion times
+- High-risk actions flagged as requiring human approval
+- Filter buttons to show All / Pending / Completed steps
+- "Mark All Complete" button triggers a celebration animation
 
 **Talking points:**
-- "Steps are ordered by priority and grouped by hypothesis."
-- "High-risk actions are flagged and require human approval before execution."
-- "SignalSage never automatically performs production-impacting actions."
-- "Each step includes estimated time so you can plan your response."
+- "High-risk actions like rollbacks are never auto-executed — they require explicit approval."
+- "Steps are actionable: they tell you exactly what to do and how long it takes."
+- "Completing all steps triggers a visual celebration — small touches for team morale."
 
 ---
 
-## Step 7: Download the Report (30 seconds)
+## Step 7: Post-Incident Report (30 seconds)
 
-Navigate to the **Report** tab. You'll see a preview of the generated post-incident report.
+Navigate to the **Report** tab. You'll see a generated markdown report with:
 
-Click **Download Report** to save the markdown file.
+- Executive summary
+- Timeline of events
+- Evidence table
+- Root cause analysis
+- Remediation checklist with statuses
+- Follow-up action items
+
+Click **Download Report** to save as markdown.
 
 **Talking points:**
-- "The report includes 6 sections: executive summary, timeline, evidence table, root cause analysis, remediation checklist, and follow-up items."
-- "It's generated as markdown so it can be pasted into Confluence, Notion, or any wiki."
 - "This saves 30-60 minutes of manual report writing after every incident."
-- "Follow-up items are automatically suggested based on the root causes found."
+- "The report is markdown — drop it into Confluence, Notion, Jira, or any wiki."
+- "Follow-up items are suggested automatically based on root causes found."
+
+---
+
+## Step 8: Real-Time Monitor (30 seconds)
+
+Navigate to the **Monitor** tab (always available). You'll see:
+
+- 4 metric cards: Total Events, Error Count, Active Services, Avg Latency
+- Live event feed with auto-refresh every 10 seconds
+- Trend arrows showing metric changes
+- Pause/Resume button to freeze the feed
+
+**Talking points:**
+- "This is a lightweight real-time operations dashboard powered by your Splunk data."
+- "Useful for monitoring during and after an incident resolution."
+
+---
+
+## Step 9: Natural Language Query (30 seconds)
+
+Navigate to the **Ask Data** tab. Type a question like:
+
+- "Show me errors in the last hour"
+- "What services have high latency?"
+- "Show deployment events from today"
+
+SignalSage translates natural language into SPL, runs it, and shows results.
+
+**Talking points:**
+- "No SPL expertise required — ask questions in plain English."
+- "Under the hood it generates optimized SPL and shows you exactly what was run."
 
 ---
 
 ## Closing (15 seconds)
 
-**Key takeaways:**
-- SignalSage reduces MTTU (Mean Time to Understand) by automating evidence correlation
-- Works with real Splunk data or demo mode for evaluation
+**Key differentiators:**
+- Connects to real Splunk data — not a mock or simulation
+- ML-powered analysis: anomaly detection, clustering, forecasting via MLTK
+- Reduces Mean Time to Understand (MTTU) by automating evidence correlation
 - Security-first: no token exposure, SPL injection prevention, field masking
-- Generates actionable reports that save hours of post-incident documentation
+- Natural language interface eliminates the SPL learning curve
+- Proactive anomaly alerts running in the background
 
 ---
 
 ## Demo Tips
 
 - Keep the browser at 100% zoom for readability
-- Use the tab navigation to move through the flow naturally
-- If asked about AI: "The analysis pipeline uses rule-based scoring today, with hooks for LLM-enhanced summaries via OpenAI"
+- Have some recent data in Splunk (run `node scripts/ingest-extended-data.js` beforehand)
+- Use tab navigation to flow through the investigation naturally
+- If asked about AI: "The analysis uses ML-boosted confidence scoring via Splunk MLTK, with hooks for Splunk AI Assistant integration"
 - If asked about scale: "The architecture is modular — each analyzer can be replaced or extended independently"
+- If asked about deployment: "Configured for Railway deployment, or any platform supporting Node.js"

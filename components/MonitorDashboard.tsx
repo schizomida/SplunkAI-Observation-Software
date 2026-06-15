@@ -32,11 +32,14 @@ interface MetricTrend {
   avgLatency: 'up' | 'down' | 'same';
 }
 
+interface MonitorDashboardProps {
+  onNavigate?: (tab: string, evidenceType?: string) => void;
+}
+
 const REFRESH_INTERVAL = 10; // seconds
 
-export default function MonitorDashboard() {
+export default function MonitorDashboard({ onNavigate }: MonitorDashboardProps) {
   const [data, setData] = useState<MonitorData | null>(null);
-  const [prevMetrics, setPrevMetrics] = useState<MonitorMetrics | null>(null);
   const [trends, setTrends] = useState<MetricTrend>({
     totalEvents: 'same',
     errorCount: 'same',
@@ -50,6 +53,7 @@ export default function MonitorDashboard() {
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const prevMetricsRef = useRef<MonitorMetrics | null>(null);
 
   const computeTrend = (prev: number, curr: number): 'up' | 'down' | 'same' => {
     if (curr > prev) return 'up';
@@ -69,27 +73,28 @@ export default function MonitorDashboard() {
       }
 
       // Compute trends comparing to previous metrics
-      if (prevMetrics && json.metrics) {
+      const prev = prevMetricsRef.current;
+      if (prev && json.metrics) {
         const newTrends: MetricTrend = {
-          totalEvents: computeTrend(prevMetrics.totalEvents, json.metrics.totalEvents),
-          errorCount: computeTrend(prevMetrics.errorCount, json.metrics.errorCount),
-          activeServices: computeTrend(prevMetrics.activeServices, json.metrics.activeServices),
-          avgLatency: computeTrend(prevMetrics.avgLatency, json.metrics.avgLatency),
+          totalEvents: computeTrend(prev.totalEvents, json.metrics.totalEvents),
+          errorCount: computeTrend(prev.errorCount, json.metrics.errorCount),
+          activeServices: computeTrend(prev.activeServices, json.metrics.activeServices),
+          avgLatency: computeTrend(prev.avgLatency, json.metrics.avgLatency),
         };
         setTrends(newTrends);
 
         // Determine which metrics changed for pulse animation
         const changed: string[] = [];
-        if (json.metrics.totalEvents !== prevMetrics.totalEvents) changed.push('totalEvents');
-        if (json.metrics.errorCount !== prevMetrics.errorCount) changed.push('errorCount');
-        if (json.metrics.activeServices !== prevMetrics.activeServices) changed.push('activeServices');
-        if (json.metrics.avgLatency !== prevMetrics.avgLatency) changed.push('avgLatency');
+        if (json.metrics.totalEvents !== prev.totalEvents) changed.push('totalEvents');
+        if (json.metrics.errorCount !== prev.errorCount) changed.push('errorCount');
+        if (json.metrics.activeServices !== prev.activeServices) changed.push('activeServices');
+        if (json.metrics.avgLatency !== prev.avgLatency) changed.push('avgLatency');
         setPulsing(changed);
         setTimeout(() => setPulsing([]), 600);
       }
 
       if (json.metrics) {
-        setPrevMetrics(json.metrics);
+        prevMetricsRef.current = json.metrics;
       }
 
       setData(json);
@@ -99,7 +104,7 @@ export default function MonitorDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [prevMetrics]);
+  }, []);
 
   // Initial fetch
   useEffect(() => {
@@ -165,7 +170,7 @@ export default function MonitorDashboard() {
   // Loading shimmer state
   if (loading && !data) {
     return (
-      <div className="space-y-6 animate-fade-in-up">
+      <div className="space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
           <div>
@@ -191,7 +196,7 @@ export default function MonitorDashboard() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -204,7 +209,7 @@ export default function MonitorDashboard() {
         </div>
         <div className="flex items-center gap-3">
           {/* Countdown indicator */}
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 ${!paused ? 'animate-breathe' : ''}`}>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
             <span className={`w-2 h-2 rounded-full ${paused ? 'bg-yellow-400' : 'bg-emerald-400'}`} />
             <span className="text-xs text-white/60 font-mono">
               {paused ? 'Paused' : `${countdown}s`}
@@ -213,7 +218,7 @@ export default function MonitorDashboard() {
           {/* Pause/Resume button */}
           <button
             onClick={() => setPaused(!paused)}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all btn-press bg-white/5 border-white/20 text-white/70 hover:bg-white/10 hover:text-white"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg border bg-emerald-900/20 border-emerald-800/30 text-white/70 hover:bg-emerald-800/30 hover:text-white"
           >
             {paused ? '▶ Resume' : '⏸ Pause'}
           </button>
@@ -302,8 +307,7 @@ export default function MonitorDashboard() {
               {data.recentEvents.map((event, idx) => (
                 <div
                   key={`${event._time}-${idx}`}
-                  className={`px-5 py-3 hover:bg-white/5 transition-colors animate-fade-in-up`}
-                  style={{ animationDelay: `${idx * 30}ms` }}
+                  className="px-5 py-3 hover:bg-emerald-900/10"
                 >
                   <div className="flex items-center gap-3">
                     <span className={`text-[10px] font-mono text-white/40 w-20 shrink-0`}>
@@ -318,9 +322,27 @@ export default function MonitorDashboard() {
                     <span className={`text-xs truncate ${levelColor(event.level)}`}>
                       {event.message || '—'}
                     </span>
-                    <span className="ml-auto text-[10px] text-white/20 shrink-0">
-                      {event.sourcetype}
-                    </span>
+                    {event.level?.toUpperCase() === 'ERROR' && onNavigate && (
+                      <div className="flex gap-1 ml-auto shrink-0">
+                        <button
+                          onClick={() => onNavigate('rootcause', 'log')}
+                          className="px-2 py-0.5 text-[10px] font-medium bg-purple-500/20 border border-purple-400/30 text-purple-300 rounded hover:bg-purple-500/30"
+                        >
+                          Root Cause
+                        </button>
+                        <button
+                          onClick={() => onNavigate('remediation', 'log')}
+                          className="px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 rounded hover:bg-emerald-500/30"
+                        >
+                          Fix
+                        </button>
+                      </div>
+                    )}
+                    {!(event.level?.toUpperCase() === 'ERROR' && onNavigate) && (
+                      <span className="ml-auto text-[10px] text-white/20 shrink-0">
+                        {event.sourcetype}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}

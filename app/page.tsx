@@ -39,14 +39,14 @@ const TABS: { id: Tab; label: string; icon: string; step: number }[] = [
   { id: 'remediation', label: 'Remediation', icon: '4', step: 4 },
   { id: 'report', label: 'Report', icon: '5', step: 5 },
   { id: 'monitor', label: 'Monitor', icon: '6', step: 6 },
-  { id: 'chat', label: 'Ask Data', icon: '7', step: 7 },
+  { id: 'chat', label: 'Ask Splunk', icon: '7', step: 7 },
 ];
 
 // Map evidence type → hypothesis type for highlighting
 const EVIDENCE_TO_HYPOTHESIS: Record<string, string> = {
   log: 'error-spike',
   metric: 'resource-exhaustion',
-  trace: 'performance-degradation',
+  trace: 'dependency-timeout',
   deployment: 'deployment-correlation',
 };
 
@@ -87,24 +87,36 @@ export default function Home() {
 
     // Handle highlight from evidence navigation
     if (evidenceType) {
-      const hypothesisType = EVIDENCE_TO_HYPOTHESIS[evidenceType];
+      // If evidenceType is already a hypothesis type, use it directly; otherwise map it
+      const KNOWN_HYPOTHESIS_TYPES = ['deployment-correlation', 'error-spike', 'dependency-timeout', 'resource-exhaustion', 'cascading-failure', 'performance-degradation', 'configuration-change'];
+      const hypothesisType = KNOWN_HYPOTHESIS_TYPES.includes(evidenceType)
+        ? evidenceType
+        : EVIDENCE_TO_HYPOTHESIS[evidenceType] || evidenceType;
+
       if (hypothesisType) {
         if (tab === 'rootcause') {
           setHighlightedHypothesis(hypothesisType);
           setTimeout(() => setHighlightedHypothesis(null), 3000);
         } else if (tab === 'remediation') {
-          // Find the hypothesis matching this evidence type
+          // Find the first remediation step belonging to this hypothesis type
+          // Remediation steps are generated sequentially: 3 steps per hypothesis in order
           if (investigation) {
             const hypothesisIndex = investigation.hypotheses.findIndex(
               (h) => h.type === hypothesisType
             );
             if (hypothesisIndex >= 0) {
-              // Each hypothesis generates 3 remediation steps, so the first step for this hypothesis
-              // is at index hypothesisIndex * 3
-              const stepIndex = hypothesisIndex * 3;
-              if (investigation.remediation[stepIndex]) {
-                setHighlightedStep(investigation.remediation[stepIndex].id);
-                setTimeout(() => setHighlightedStep(null), 3000);
+              // Count steps from hypotheses that come before this one
+              // Each hypothesis with a playbook entry produces 3 steps
+              const PLAYBOOK_TYPES = ['deployment-correlation', 'error-spike', 'dependency-timeout', 'resource-exhaustion'];
+              let stepOffset = 0;
+              for (let i = 0; i < hypothesisIndex; i++) {
+                if (PLAYBOOK_TYPES.includes(investigation.hypotheses[i].type)) {
+                  stepOffset += 3;
+                }
+              }
+              if (investigation.remediation[stepOffset]) {
+                setHighlightedStep(investigation.remediation[stepOffset].id);
+                setTimeout(() => setHighlightedStep(null), 4000);
               }
             }
           }
@@ -237,7 +249,7 @@ export default function Home() {
   function renderTabContent() {
     // Monitor and Chat tabs are always available — skip loading/error gates
     if (activeTab === 'monitor') {
-      return <MonitorDashboard />;
+      return <MonitorDashboard onNavigate={handleTabChange} />;
     }
     if (activeTab === 'chat') {
       return <NLQueryChat />;
@@ -277,7 +289,7 @@ export default function Home() {
           return <p className="text-white/50 text-center py-8">Select an incident first.</p>;
         }
         return (
-          <div className="space-y-8 animate-fade-in-up">
+          <div className="space-y-8">
             {renderAiSummary(aiSummaries.investigation)}
             <section>
               <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -297,7 +309,7 @@ export default function Home() {
           return <p className="text-white/50 text-center py-8">Run an investigation first.</p>;
         }
         return (
-          <div className="animate-fade-in-up">
+          <div>
             {renderAiSummary(aiSummaries.rootcause)}
             <RootCauseCard hypotheses={investigation.hypotheses} highlightedType={highlightedHypothesis} onNavigate={handleTabChange} />
           </div>
@@ -308,7 +320,7 @@ export default function Home() {
           return <p className="text-white/50 text-center py-8">Run an investigation first.</p>;
         }
         return (
-          <div className="animate-fade-in-up">
+          <div>
             {renderAiSummary(aiSummaries.remediation)}
             <RemediationChecklist steps={investigation.remediation} highlightedStepId={highlightedStep} />
           </div>
@@ -319,7 +331,7 @@ export default function Home() {
           return <p className="text-white/50 text-center py-8">Generate a report first.</p>;
         }
         return (
-          <div className="animate-fade-in-up">
+          <div>
             {renderAiSummary(aiSummaries.executive)}
             <ReportPreview report={report} />
           </div>
@@ -335,9 +347,9 @@ export default function Home() {
   }
 
   return (
-    <main className={`min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 animate-scale-in-app${investigation ? ' bg-breathing' : ''}`}>
+    <main className={`min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 animate-scale-in-app${investigation ? ' bg-breathing electric-border-active' : ' electric-border-idle'}`}>
       {/* Header */}
-      <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 px-6 py-5">
+      <header className="bg-slate-900/80 border-b border-emerald-900/30 px-6 py-5">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <WizardMascot reaction={wizardReaction} size="sm" />
@@ -359,7 +371,7 @@ export default function Home() {
       </header>
 
       {/* Tabs */}
-      <nav className="bg-white/5 backdrop-blur-xl border-b border-white/10 sticky top-0 z-10">
+      <nav className="bg-slate-900/80 border-b border-emerald-900/30 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex space-x-1 overflow-x-auto py-1">
             {TABS.map((tab, index) => {
@@ -377,10 +389,10 @@ export default function Home() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap rounded-t-lg btn-press ${
+                  className={`relative flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap rounded-t-lg ${
                     isActive
-                      ? 'border-indigo-400 text-white bg-white/10'
-                      : 'border-transparent text-white/50 hover:text-white/70 hover:border-white/20 hover:bg-white/5'
+                      ? 'border-indigo-400 text-white bg-emerald-900/20'
+                      : 'border-transparent text-white/50 hover:text-white/70 hover:border-emerald-700/30 hover:bg-emerald-900/10'
                   }`}
                 >
                   {isActive && (
@@ -400,7 +412,7 @@ export default function Home() {
                   <span className="hidden sm:inline">{tab.label}</span>
                   <span className="sm:hidden">{tab.step}</span>
                   {index < TABS.length - 1 && (
-                    <span className="text-white/20 ml-1 hidden lg:inline animate-breathe">→</span>
+                    <span className="text-white/20 ml-1 hidden lg:inline">→</span>
                   )}
                 </button>
               );
@@ -411,7 +423,7 @@ export default function Home() {
 
       {/* Status banner */}
       {incident && !loading && !error && (
-        <div className="bg-white/5 border-b border-white/10 transition-all duration-300">
+        <div className="bg-white/5 border-b border-emerald-900/30 transition-all duration-300">
           <div className="max-w-6xl mx-auto px-6 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-3 text-xs text-white/60">
               <span className="flex items-center gap-1">
@@ -454,7 +466,7 @@ export default function Home() {
       {/* Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
         <ErrorBoundary onRetry={handleRetry}>
-          <div key={activeTab} className="tab-content-enter">
+          <div key={activeTab}>
             {renderTabContent()}
           </div>
         </ErrorBoundary>

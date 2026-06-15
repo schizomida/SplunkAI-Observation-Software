@@ -7,11 +7,19 @@ interface ReportPreviewProps {
   report: IncidentReport;
 }
 
+const SECTION_ICONS: Record<string, string> = {
+  'Executive Summary': 'TL;DR',
+  'Timeline': 'TIME',
+  'Evidence Table': 'DATA',
+  'Root Cause Analysis': 'ROOT',
+  'Remediation Checklist': 'FIX',
+  'Follow-up Items': 'NEXT',
+};
+
 export default function ReportPreview({ report }: ReportPreviewProps) {
   const [copied, setCopied] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<Set<number>>(
-    new Set(report.sections.map((_, i) => i))
-  );
+  const [expandedSection, setExpandedSection] = useState<number | null>(0);
+  const [shareVisible, setShareVisible] = useState(false);
 
   function handleDownload() {
     const blob = new Blob([report.markdown], { type: 'text/markdown' });
@@ -32,93 +40,95 @@ export default function ReportPreview({ report }: ReportPreviewProps) {
     });
   }
 
-  function toggleSection(index: number) {
-    setVisibleSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
+  function handleShare() {
+    setShareVisible(true);
+    setTimeout(() => setShareVisible(false), 3000);
   }
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Header with actions */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-white">Incident Report</h3>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-xl font-bold text-white">Post-Incident Report</h3>
+          <p className="text-xs text-white/50 mt-1">
+            Auto-generated from your investigation — ready to share with your team
+          </p>
+        </div>
         <div className="flex gap-2">
           <button
+            onClick={handleShare}
+            className="px-3 py-2 text-xs font-medium rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-300"
+          >
+            {shareVisible ? 'Link copied!' : 'Share'}
+          </button>
+          <button
             onClick={handleCopy}
-            className={`px-3 py-2 text-sm font-medium rounded-lg border transition-all ${
-              copied
-                ? 'bg-green-500/20 border-green-400/30 text-green-300'
-                : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10 hover:shadow-lg hover:shadow-indigo-500/20'
+            className={`px-3 py-2 text-xs font-medium rounded-lg border ${
+              copied ? 'bg-green-500/20 border-green-400/30 text-green-300' : 'bg-emerald-900/20 border-emerald-800/30 text-white/70'
             }`}
           >
-            {copied ? '✓ Copied' : 'Copy to Clipboard'}
+            {copied ? 'Copied!' : 'Copy All'}
           </button>
           <button
             onClick={handleDownload}
-            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-all shadow-sm hover:shadow-lg hover:shadow-indigo-500/30"
+            className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg"
           >
-            Download .md
+            Export .md
           </button>
         </div>
       </div>
 
-      {/* Report metadata */}
-      <div className="flex items-center gap-4 mb-4 text-xs text-white/50 bg-white/5 rounded-lg px-4 py-2 border border-white/10">
-        <span>Generated: {new Date(report.generatedAt).toLocaleString()}</span>
-        <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>Incident: {report.incidentId}</span>
-        <span className="w-1 h-1 rounded-full bg-white/20" />
-        <span>{report.sections.length} sections</span>
+      {/* Quick stats */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-center">
+          <p className="text-lg font-bold text-white">{report.sections.length}</p>
+          <p className="text-[10px] text-white/50">Sections</p>
+        </div>
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-center">
+          <p className="text-lg font-bold text-white">{report.markdown.split('\n').length}</p>
+          <p className="text-[10px] text-white/50">Lines</p>
+        </div>
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 text-center">
+          <p className="text-lg font-bold text-emerald-300">Ready</p>
+          <p className="text-[10px] text-white/50">Status</p>
+        </div>
       </div>
 
-      {/* Section toggles */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {report.sections.map((section, i) => (
-          <button
-            key={i}
-            onClick={() => toggleSection(i)}
-            className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors hover:bg-white/10 ${
-              visibleSections.has(i)
-                ? 'bg-indigo-500/20 border-indigo-400/30 text-indigo-300'
-                : 'bg-white/5 border-white/20 text-white/40 line-through'
-            }`}
-          >
-            {section.title}
-          </button>
-        ))}
-      </div>
-
-      {/* Report content */}
-      <div className="border border-white/10 rounded-xl p-6 bg-white/5 backdrop-blur shadow-sm">
-        <div className="prose prose-sm max-w-none">
-          {report.sections.map((section, i) => {
-            if (!visibleSections.has(i)) return null;
-            return (
-              <div key={i} className="mb-8 last:mb-0 animate-fade-in-up opacity-0" style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'forwards' }}>
-                <h4 className="text-base font-bold text-white/90 mb-3 pb-2 border-b border-white/10 flex items-center gap-2">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold">
-                    {i + 1}
-                  </span>
-                  {section.title}
-                </h4>
-                <div className="text-sm text-white/70 whitespace-pre-wrap leading-relaxed font-mono bg-gray-900/50 rounded-lg p-4 border border-white/10">
-                  {section.content}
+      {/* Accordion sections */}
+      <div className="space-y-2">
+        {report.sections.map((section, i) => {
+          const isExpanded = expandedSection === i;
+          const icon = SECTION_ICONS[section.title] || `S${i + 1}`;
+          return (
+            <div key={i} className="border border-white/10 rounded-lg bg-slate-900/50 overflow-hidden">
+              <button
+                onClick={() => setExpandedSection(isExpanded ? null : i)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-left"
+              >
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  {icon}
+                </span>
+                <span className="text-sm font-semibold text-white/90 flex-1">{section.title}</span>
+                <span className="text-xs text-white/30">{isExpanded ? '▼' : '▶'}</span>
+              </button>
+              {isExpanded && (
+                <div className="px-4 pb-4">
+                  <pre className="text-xs text-white/60 whitespace-pre-wrap leading-relaxed max-h-[250px] overflow-y-auto bg-black/20 rounded-lg p-3">
+                    {section.content.length > 2000
+                      ? section.content.slice(0, 2000) + '\n\n... (download full report for complete content)'
+                      : section.content}
+                  </pre>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <p className="text-xs text-white/40 mt-3 text-center">
-        Report generated at {new Date(report.generatedAt).toLocaleString()} • Incident ID: {report.incidentId}
+      {/* Footer */}
+      <p className="text-[10px] text-white/30 mt-4 text-center">
+        Generated {new Date(report.generatedAt).toLocaleString()} — paste into Confluence, Notion, or Jira
       </p>
     </div>
   );

@@ -28,26 +28,23 @@ export default function WelcomePage({ onStart }: WelcomePageProps) {
   function handleStart() {
     playStartSound();
     setExiting(true);
-    // Wait for animation to finish
-    setTimeout(() => onStart(), 800);
+    // Quick transition — 400ms to avoid white flash between views
+    setTimeout(() => onStart(), 400);
   }
 
   return (
     <div className={`min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 transition-all duration-600 ${exiting ? 'animate-explode-out' : ''}`}>
-      {/* Animated background particles */}
+      {/* Animated background particles — minimal */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
-        <div className="absolute top-10 right-10 w-32 h-32 bg-pink-500/10 rounded-full blur-2xl animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-10 left-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl" />
       </div>
 
       {/* Content */}
       <div className={`relative z-10 text-center px-6 max-w-2xl transition-all duration-1000 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {/* Logo / Title */}
         <div className="mb-8">
-          <div className={`inline-flex items-center justify-center w-20 h-20 mb-6 animate-glow transition-all duration-700 ${exiting ? 'scale-[3] rotate-[720deg] opacity-0' : ''}`}>
+          <div className={`inline-flex items-center justify-center w-20 h-20 mb-6 ${exiting ? 'scale-[2] opacity-0 transition-all duration-400' : ''}`}>
             <WizardMascot reaction={exiting ? 'celebrating' : 'idle'} size="lg" />
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-4">

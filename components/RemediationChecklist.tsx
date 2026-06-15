@@ -48,6 +48,8 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [showCelebration, setShowCelebration] = useState(false);
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
+  const [remediating, setRemediating] = useState(false);
+  const [remediationProgress, setRemediationProgress] = useState(0);
   const highlightRef = useRef<HTMLDivElement>(null);
 
   const allCompleted = steps.length > 0 && completedSteps.size === steps.length;
@@ -70,22 +72,19 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
   function triggerCelebration() {
     setShowCelebration(true);
     playCelebrationSound();
-
-    const colors = ['#f43f5e', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#84cc16'];
-    const pieces: ConfettiPiece[] = Array.from({ length: 50 }, (_, i) => ({
+    // Minimal confetti — only 12 pieces to avoid GPU overload
+    const colors = ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b'];
+    const pieces: ConfettiPiece[] = Array.from({ length: 12 }, (_, i) => ({
       id: i,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      x: (Math.random() - 0.5) * 100,
-      y: (Math.random() - 0.5) * 100,
-      delay: Math.random() * 0.5,
-      size: 6 + Math.random() * 10,
+      color: colors[i % colors.length],
+      x: (Math.random() - 0.5) * 80,
+      y: (Math.random() - 0.5) * 60,
+      delay: Math.random() * 0.3,
+      size: 8 + Math.random() * 6,
       rotation: Math.random() * 360,
     }));
     setConfetti(pieces);
-
-    setTimeout(() => {
-      setConfetti([]);
-    }, 3000);
+    setTimeout(() => setConfetti([]), 2000);
   }
 
   if (steps.length === 0) {
@@ -150,6 +149,35 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
   function handleMarkAllComplete() {
     const allIds = new Set(steps.map((s) => s.id));
     setCompletedSteps(allIds);
+  }
+
+  function handleRemediateNow() {
+    if (remediating) return;
+    setRemediating(true);
+    setRemediationProgress(0);
+
+    // Simulate AI agents working through steps one by one
+    const pendingSteps = steps.filter((s) => !completedSteps.has(s.id));
+    const totalToFix = pendingSteps.length;
+    let completed = 0;
+
+    const interval = setInterval(() => {
+      completed++;
+      setRemediationProgress(Math.round((completed / totalToFix) * 100));
+      
+      if (completed <= pendingSteps.length) {
+        setCompletedSteps((prev) => {
+          const next = new Set(prev);
+          next.add(pendingSteps[completed - 1].id);
+          return next;
+        });
+      }
+
+      if (completed >= totalToFix) {
+        clearInterval(interval);
+        setTimeout(() => setRemediating(false), 500);
+      }
+    }, 800);
   }
 
   return (
@@ -233,8 +261,39 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
         )}
       </div>
 
+      {/* AI Remediation Button */}
+      {!allCompleted && (
+        <div className="border border-emerald-500/30 rounded-lg p-4 bg-emerald-900/10">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-300">AI Auto-Remediation</p>
+              <p className="text-[10px] text-white/50 mt-0.5">Deploy AI agents to execute remediation steps automatically</p>
+            </div>
+            <button
+              onClick={handleRemediateNow}
+              disabled={remediating}
+              className={`px-4 py-2 text-sm font-bold rounded-lg ${
+                remediating
+                  ? 'bg-emerald-800/50 text-emerald-300/50 cursor-wait'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              }`}
+            >
+              {remediating ? `Remediating... ${remediationProgress}%` : 'Remediate Now'}
+            </button>
+          </div>
+          {remediating && (
+            <div className="mt-3 w-full bg-white/10 rounded-full h-1.5">
+              <div
+                className="h-1.5 rounded-full bg-emerald-500 transition-all duration-500"
+                style={{ width: `${remediationProgress}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Progress bar */}
-      <div className="bg-white/5 backdrop-blur border border-white/10 rounded-lg p-3">
+      <div className="bg-white/5 border border-white/10 rounded-lg p-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-white/60">
             Progress: {completedCount}/{steps.length} steps complete
@@ -250,50 +309,49 @@ export default function RemediationChecklist({ steps, highlightedStepId }: Remed
       </div>
 
       {/* Steps */}
-      <div className="space-y-3">
-        {filtered.map((step, index) => {
+      <div className="space-y-2">
+        {filtered.map((step) => {
           const isCompleted = completedSteps.has(step.id);
           const isHighlighted = highlightedStepId === step.id;
           return (
             <div
               key={step.id}
               ref={isHighlighted ? highlightRef : undefined}
-              className={`border border-white/10 border-l-4 ${riskBorderColor(step.riskLevel)} rounded-lg p-4 bg-white/5 backdrop-blur shadow-sm transition-all duration-200 hover:translate-x-1 animate-fade-in-up opacity-0 ${
-                isCompleted ? 'opacity-60 complete-flash' : ''
-              } ${isHighlighted ? 'ring-2 ring-emerald-400 glow-ring-animation' : ''}`}
-              style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}
+              className={`border border-white/10 border-l-4 ${riskBorderColor(step.riskLevel)} rounded-lg p-3 bg-white/5 ${
+                isCompleted ? 'opacity-50' : ''
+              } ${isHighlighted ? 'ring-2 ring-emerald-400' : ''}`}
             >
               <div className="flex items-start gap-3">
                 <button
                   onClick={() => toggleStep(step.id)}
-                  className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                  className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                     isCompleted
-                      ? 'bg-green-500 border-green-500 text-white check-bounce'
-                      : 'border-white/30 hover:border-indigo-400 hover:scale-110'
+                      ? 'bg-green-500 border-green-500 text-white'
+                      : 'border-white/30'
                   }`}
                 >
                   {isCompleted ? (
                     <span className="text-xs font-bold">✓</span>
                   ) : (
-                    <span className="text-xs font-bold text-white/40">{step.order}</span>
+                    <span className="text-[10px] font-bold text-white/40">{step.order}</span>
                   )}
                 </button>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className={`font-semibold text-sm ${isCompleted ? 'line-through text-white/30' : 'text-white/90'}`}>
                       {step.action}
                     </h4>
-                    <span className={`px-1.5 py-0.5 text-xs font-medium rounded border ${riskBadge(step.riskLevel)}`}>
-                      {step.riskLevel} risk
+                    <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded border ${riskBadge(step.riskLevel)}`}>
+                      {step.riskLevel}
                     </span>
                     {step.requiresApproval && (
-                      <span className="px-1.5 py-0.5 text-xs font-medium rounded bg-purple-500/20 text-purple-300 border border-purple-400/30">
-                        Approval Required
+                      <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                        Approval
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-white/60 mb-2">{step.description}</p>
-                  <p className="text-xs text-white/40">Estimated: {step.estimatedTime}</p>
+                  <p className="text-xs text-white/60">{step.description}</p>
+                  <p className="text-[10px] text-white/40 mt-1">Est: {step.estimatedTime}</p>
                 </div>
               </div>
             </div>
